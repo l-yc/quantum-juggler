@@ -1,14 +1,14 @@
 {
   "schema": "xilinx.com:schema:json_instance:1.0",
   "ip_inst": {
-    "xci_name": "design_1_xadc_wiz_0_1",
+    "xci_name": "xadc_wiz",
     "cell_name": "xadc_wiz_0",
     "component_reference": "xilinx.com:ip:xadc_wiz:3.3",
     "ip_revision": "10",
-    "gen_directory": "../../../../../../xadc_test.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_1",
+    "gen_directory": "ip/xadc_wiz",
     "parameters": {
       "component_parameters": {
-        "Component_Name": [ { "value": "design_1_xadc_wiz_0_1", "resolve_type": "user", "usage": "all" } ],
+        "Component_Name": [ { "value": "xadc_wiz", "resolve_type": "user", "usage": "all" } ],
         "INTERFACE_SELECTION": [ { "value": "ENABLE_DRP", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "SIM_FILE_SEL": [ { "value": "Default", "resolve_type": "user", "usage": "all" } ],
         "SIM_FILE_REL_PATH": [ { "value": "./", "resolve_type": "user", "enabled": false, "usage": "all" } ],
@@ -169,7 +169,7 @@
         "POWER_DOWN_ADCB": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ]
       },
       "model_parameters": {
-        "c_component_name": [ { "value": "design_1_xadc_wiz_0_1", "resolve_type": "generated", "usage": "all" } ],
+        "c_component_name": [ { "value": "xadc_wiz", "resolve_type": "generated", "usage": "all" } ],
         "C_SIM_FILE_SEL": [ { "value": "Default", "resolve_type": "generated", "usage": "all" } ],
         "C_SIM_FILE_REL_PATH": [ { "value": "./", "resolve_type": "generated", "usage": "all" } ],
         "C_SIM_FILE_NAME": [ { "value": "design", "resolve_type": "generated", "usage": "all" } ],
@@ -267,7 +267,7 @@
         "IPCONTEXT": [ { "value": "IP_Integrator" } ],
         "IPREVISION": [ { "value": "10" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../../../xadc_test.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_1" } ],
+        "OUTPUTDIR": [ { "value": "xadc_wiz" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "../../ipshared" } ],
         "SWVERSION": [ { "value": "2024.1" } ],
