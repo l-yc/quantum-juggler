@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Sun Nov  3 18:25:38 2024
-| Host         : eecs-digital-41 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Thu Nov 14 14:49:35 2024
+| Host         : eecs-digital-17 running 64-bit Ubuntu 24.04.1 LTS
 | Command      : report_timing -file obj/post_route_timing.rpt
 | Design       : top_level
 | Device       : 7s50-csga324
@@ -12,20 +12,20 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanc
 
 Timing Report
 
-Slack (MET) :             0.252ns  (required time - arrival time)
-  Source:                 crw/sccb_c/delay_reg_reg[0]/C
+Slack (MET) :             0.352ns  (required time - arrival time)
+  Source:                 crw/FSM_onehot_state_reg[5]/C
                             (rising edge-triggered cell FDRE clocked by clk_camera_cw_fast  {rise@0.000ns fall@2.500ns period=5.000ns})
   Destination:            crw/sccb_c/delay_reg_reg[11]/CE
                             (rising edge-triggered cell FDRE clocked by clk_camera_cw_fast  {rise@0.000ns fall@2.500ns period=5.000ns})
   Path Group:             clk_camera_cw_fast
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            5.000ns  (clk_camera_cw_fast rise@5.000ns - clk_camera_cw_fast rise@0.000ns)
-  Data Path Delay:        4.490ns  (logic 1.242ns (27.660%)  route 3.248ns (72.340%))
-  Logic Levels:           4  (LUT4=1 LUT6=3)
-  Clock Path Skew:        -0.022ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    -2.032ns = ( 2.968 - 5.000 ) 
-    Source Clock Delay      (SCD):    -2.424ns
-    Clock Pessimism Removal (CPR):    -0.414ns
+  Data Path Delay:        4.341ns  (logic 1.087ns (25.038%)  route 3.254ns (74.962%))
+  Logic Levels:           4  (LUT2=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    -2.040ns = ( 2.960 - 5.000 ) 
+    Source Clock Delay      (SCD):    -2.433ns
+    Clock Pessimism Removal (CPR):    -0.428ns
   Clock Uncertainty:      0.067ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Discrete Jitter          (DJ):    0.113ns
@@ -43,20 +43,20 @@ Slack (MET) :             0.252ns  (required time - arrival time)
                                                      -8.486    -5.792 r  wizard_migcam/plle2_adv_inst/CLKOUT2
                          net (fo=1, routed)           1.660    -4.132    wizard_migcam/clk_camera_cw_fast
     BUFGCTRL_X0Y3        BUFG (Prop_bufg_I_O)         0.096    -4.036 r  wizard_migcam/clkout3_buf/O
-                         net (fo=227, routed)         1.612    -2.424    crw/sccb_c/clk_camera
-    SLICE_X2Y78          FDRE                                         r  crw/sccb_c/delay_reg_reg[0]/C
+                         net (fo=227, routed)         1.603    -2.433    crw/clk_camera
+    SLICE_X5Y75          FDRE                                         r  crw/FSM_onehot_state_reg[5]/C
   -------------------------------------------------------------------    -------------------
-    SLICE_X2Y78          FDRE (Prop_fdre_C_Q)         0.518    -1.906 r  crw/sccb_c/delay_reg_reg[0]/Q
-                         net (fo=3, routed)           1.140    -0.766    crw/sccb_c/delay_reg[0]
-    SLICE_X2Y78          LUT4 (Prop_lut4_I1_O)        0.148    -0.618 r  crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_6/O
-                         net (fo=1, routed)           0.452    -0.166    crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_6_n_2
-    SLICE_X2Y78          LUT6 (Prop_lut6_I0_O)        0.328     0.162 r  crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_3/O
-                         net (fo=20, routed)          0.557     0.719    crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_3_n_2
-    SLICE_X2Y79          LUT6 (Prop_lut6_I0_O)        0.124     0.843 r  crw/sccb_c/delay_reg[16]_i_3/O
-                         net (fo=1, routed)           0.551     1.394    crw/sccb_c/delay_reg[16]_i_3_n_2
-    SLICE_X5Y79          LUT6 (Prop_lut6_I1_O)        0.124     1.518 r  crw/sccb_c/delay_reg[16]_i_1/O
-                         net (fo=17, routed)          0.548     2.066    crw/sccb_c/delay_reg[16]_i_1_n_2
-    SLICE_X2Y79          FDRE                                         r  crw/sccb_c/delay_reg_reg[11]/CE
+    SLICE_X5Y75          FDRE (Prop_fdre_C_Q)         0.419    -2.014 r  crw/FSM_onehot_state_reg[5]/Q
+                         net (fo=10, routed)          1.012    -1.002    crw/sccb_c/Q[5]
+    SLICE_X4Y72          LUT6 (Prop_lut6_I3_O)        0.296    -0.706 f  crw/sccb_c/FSM_onehot_state_reg[2]_i_2/O
+                         net (fo=7, routed)           0.820     0.114    crw/sccb_c/FSM_onehot_state_reg[2]_i_2_n_2
+    SLICE_X4Y74          LUT5 (Prop_lut5_I0_O)        0.124     0.238 f  crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_5/O
+                         net (fo=3, routed)           0.456     0.694    crw/sccb_c/FSM_sequential_phy_state_reg[3]_i_5_n_2
+    SLICE_X1Y74          LUT2 (Prop_lut2_I1_O)        0.124     0.818 r  crw/sccb_c/sda_o_reg_i_3/O
+                         net (fo=2, routed)           0.452     1.270    crw/sccb_c/sda_o_reg_i_3_n_2
+    SLICE_X1Y73          LUT6 (Prop_lut6_I2_O)        0.124     1.394 r  crw/sccb_c/delay_reg[16]_i_1/O
+                         net (fo=17, routed)          0.515     1.908    crw/sccb_c/delay_reg[16]_i_1_n_2
+    SLICE_X4Y74          FDRE                                         r  crw/sccb_c/delay_reg_reg[11]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_camera_cw_fast rise edge)
@@ -69,16 +69,16 @@ Slack (MET) :             0.252ns  (required time - arrival time)
                                                      -7.753    -0.202 r  wizard_migcam/plle2_adv_inst/CLKOUT2
                          net (fo=1, routed)           1.582     1.380    wizard_migcam/clk_camera_cw_fast
     BUFGCTRL_X0Y3        BUFG (Prop_bufg_I_O)         0.091     1.471 r  wizard_migcam/clkout3_buf/O
-                         net (fo=227, routed)         1.498     2.968    crw/sccb_c/clk_camera
-    SLICE_X2Y79          FDRE                                         r  crw/sccb_c/delay_reg_reg[11]/C
-                         clock pessimism             -0.414     2.554    
-                         clock uncertainty           -0.067     2.487    
-    SLICE_X2Y79          FDRE (Setup_fdre_C_CE)      -0.169     2.318    crw/sccb_c/delay_reg_reg[11]
+                         net (fo=227, routed)         1.490     2.960    crw/sccb_c/clk_camera
+    SLICE_X4Y74          FDRE                                         r  crw/sccb_c/delay_reg_reg[11]/C
+                         clock pessimism             -0.428     2.532    
+                         clock uncertainty           -0.067     2.465    
+    SLICE_X4Y74          FDRE (Setup_fdre_C_CE)      -0.205     2.260    crw/sccb_c/delay_reg_reg[11]
   -------------------------------------------------------------------
-                         required time                          2.318    
-                         arrival time                          -2.066    
+                         required time                          2.260    
+                         arrival time                          -1.908    
   -------------------------------------------------------------------
-                         slack                                  0.252    
+                         slack                                  0.352    
 
 
 

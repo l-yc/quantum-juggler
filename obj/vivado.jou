@@ -3,22 +3,22 @@
 # SW Build 5076996 on Wed May 22 18:36:09 MDT 2024
 # IP Build 5075265 on Wed May 22 21:45:21 MDT 2024
 # SharedData Build 5076995 on Wed May 22 18:29:18 MDT 2024
-# Start of session at: Sun Nov  3 18:20:27 2024
-# Process ID: 2384
-# Current directory: /home/fpga/worker_place/temp/c760dbc9c9b84d1c9cb8bad5867df8a8/quantum-juggler
+# Start of session at: Thu Nov 14 14:47:27 2024
+# Process ID: 2809
+# Current directory: /home/fpga/worker_place/temp/temp/0d8d109417e043918a7eebe38f2954ce/quantum-juggler
 # Command line: vivado -mode batch -source build.tcl
-# Log file: /home/fpga/worker_place/temp/c760dbc9c9b84d1c9cb8bad5867df8a8/quantum-juggler/vivado.log
-# Journal file: /home/fpga/worker_place/temp/c760dbc9c9b84d1c9cb8bad5867df8a8/quantum-juggler/vivado.jou
-# Running On        :eecs-digital-41
+# Log file: /home/fpga/worker_place/temp/temp/0d8d109417e043918a7eebe38f2954ce/quantum-juggler/vivado.log
+# Journal file: /home/fpga/worker_place/temp/temp/0d8d109417e043918a7eebe38f2954ce/quantum-juggler/vivado.jou
+# Running On        :eecs-digital-17
 # Platform          :Ubuntu
 # Operating System  :Ubuntu 24.04.1 LTS
-# Processor Detail  :AMD Ryzen 7 2700X Eight-Core Processor
-# CPU Frequency     :2200.000 MHz
-# CPU Physical cores:8
-# CPU Logical cores :16
-# Host memory       :16686 MB
-# Swap memory       :4294 MB
-# Total Virtual     :20981 MB
-# Available Virtual :20017 MB
+# Processor Detail  :13th Gen Intel(R) Core(TM) i7-13700
+# CPU Frequency     :3725.177 MHz
+# CPU Physical cores:16
+# CPU Logical cores :24
+# Host memory       :33324 MB
+# Swap memory       :8589 MB
+# Total Virtual     :41914 MB
+# Available Virtual :40822 MB
 #-----------------------------------------------------------
 source build.tcl
