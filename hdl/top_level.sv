@@ -24,7 +24,22 @@ module top_level (
     // hdmi port
     output logic [2:0]  hdmi_tx_p, // hdmi output signals (positives) (blue, green, red)
     output logic [2:0]  hdmi_tx_n, // hdmi output signals (negatives) (blue, green, red)
-    output logic        hdmi_clk_p, hdmi_clk_n // differential hdmi clock
+    output logic        hdmi_clk_p, hdmi_clk_n, // differential hdmi clock
+    // DDR3 ports
+    inout wire [15:0]   ddr3_dq,
+    inout wire [1:0]    ddr3_dqs_n,
+    inout wire [1:0]    ddr3_dqs_p,
+    output wire [12:0]  ddr3_addr,
+    output wire [2:0]   ddr3_ba,
+    output wire         ddr3_ras_n,
+    output wire         ddr3_cas_n,
+    output wire         ddr3_we_n,
+    output wire         ddr3_reset_n,
+    output wire         ddr3_ck_p,
+    output wire         ddr3_ck_n,
+    output wire         ddr3_cke,
+    output wire [1:0]   ddr3_dm,
+    output wire         ddr3_odt
     );
 
     // shut up those RGBs
@@ -38,6 +53,10 @@ module top_level (
     logic clk_pixel;
     logic clk_5x;
     logic clk_xc;
+    logic clk_migref;
+    logic sys_rst_migref;
+    logic clk_ui;
+    logic sys_rst_ui;
     logic clk_100_passthrough;
 
     // clocking wizards to generate the clock speeds we need for our different domains
@@ -50,6 +69,7 @@ module top_level (
     cw_fast_clk_wiz wizard_migcam(
         .clk_in1(clk_100mhz),
         .clk_camera(clk_camera),
+        .clk_mig(clk_migref),
         .clk_xc(clk_xc),
         .clk_100(clk_100_passthrough),
         .reset(0));
@@ -57,8 +77,9 @@ module top_level (
     // assign camera's xclk to pmod port: drive the operating clock of the camera!
     // this port also is specifically set to high drive by the XDC file.
     assign cam_xclk = clk_xc;
-    assign sys_rst_camera = btn[0]; //use for resetting camera side of logic
-    assign sys_rst_pixel = btn[0]; //use for resetting hdmi/draw side of logic
+    assign sys_rst_camera = btn[0]; //use for resetting camera side
+    assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side
+    assign sys_rst_migref = btn[0];
 
     // video signal generator signals
     logic        hsync_hdmi;
@@ -71,9 +92,9 @@ module top_level (
     logic        nf_hdmi;
 
     // rgb output values
-    logic [7:0] red,green,blue;
+    logic [7:0] red, green, blue;
 
-    // ** Handling input from the camera **
+    //-------------- CAMERA INPUT HANDLING --------------//
 
     // synchronizers to prevent metastability
     logic [7:0] camera_d_buf [1:0];
@@ -105,6 +126,11 @@ module top_level (
         .pixel_vcount_out(camera_vcount),
         .pixel_data_out(camera_pixel));
 
+    logic [15:0] frame_buff_bram; // data out of BRAM frame buffer
+    logic [15:0] frame_buff_dram; // data out of DRAM frame buffer
+    logic [15:0] frame_buff_raw;  // select between the two!
+    assign frame_buff_raw = sw[0] ? frame_buff_dram : frame_buff_bram;
+
     // clock domain cross (from clk_camera to clk_pixel)
     // switching from camera clock domain to pixel clock domain early
     // this lets us do convolution on the 74.25 MHz clock rather than the
@@ -114,7 +140,6 @@ module top_level (
     logic [15:0] cdc_pixel;
     logic [10:0] cdc_hcount;
     logic [9:0] cdc_vcount;
-
     fifo cdc_fifo(
         .wr_clk(clk_camera),
         .full(),
@@ -124,7 +149,9 @@ module top_level (
         .empty(empty),
         .dout({cdc_hcount, cdc_vcount, cdc_pixel}),
         .rd_en(1));
-    assign cdc_valid = ~empty; //watch when empty. Ready immediately if something there
+    assign cdc_valid = ~empty;
+
+    //-------------- GAUSSIAN BLUR HERE --------------//
 
     logic [10:0] f0_hcount; // hcount from filter0 module
     logic [9:0] f0_vcount;  // vcount from filter0 module
@@ -163,9 +190,15 @@ module top_level (
         end
     end
 
+    //-------------- END GAUSSIAN BLUR --------------//
+
+    //-------------- BRAM STUFF HERE --------------//
+
     localparam FB_DEPTH = 320*180;
     localparam FB_SIZE = $clog2(FB_DEPTH);
     logic [FB_SIZE-1:0] addra; // address to write to in frame buffer
+    logic [FB_SIZE-1:0] addrb; // address in memory for reading from buffer
+    logic good_addrb;          // indicate within valid frame for scaling
     logic valid_camera_mem;    // enable writing pixel data to frame buffer
     logic [15:0] camera_mem;   // pixel data into frame buffer
 
@@ -190,16 +223,213 @@ module top_level (
         .clkb(clk_pixel),
         .web(1'b0),
         .enb(1'b1),
-        .doutb(frame_buff_raw)
-    );
-    logic [15:0] frame_buff_raw; //data out of frame buffer (565)
-    logic [FB_SIZE-1:0] addrb; //used to lookup address in memory for reading from buffer
-    logic good_addrb; //used to indicate within valid frame for scaling
-    // brought in from lab 5...just do 4X upscale
+        .doutb(frame_buff_bram));
+
+    // 4X upscale
     always_ff @(posedge clk_pixel)begin
         addrb <= (319-(hcount_hdmi >> 2)) + 320*(vcount_hdmi >> 2);
         good_addrb <= (hcount_hdmi<1280)&&(vcount_hdmi<720);
     end
+
+    //-------------- END BRAM STUFF --------------//
+
+    //-------------- DRAM STUFF HERE --------------//
+
+    logic [127:0] camera_chunk;
+    logic [127:0] camera_axis_tdata;
+    logic         camera_axis_tlast;
+    logic         camera_axis_tready;
+    logic         camera_axis_tvalid;
+    logic         camera_tlast;
+
+    // takes our 16-bit values and deserialize/stack them into 128-bit messages to write to DRAM
+    stacker stacker_inst(
+        .clk_in(clk_camera),
+        .rst_in(sys_rst_camera),
+        .pixel_tvalid(camera_valid),
+        .pixel_tready(),
+        .pixel_tdata(camera_pixel),
+        .pixel_tlast(camera_hcount == 1279 && camera_vcount == 719),
+        .chunk_tvalid(camera_axis_tvalid),
+        .chunk_tready(camera_axis_tready),
+        .chunk_tdata(camera_axis_tdata),
+        .chunk_tlast(camera_axis_tlast));
+
+    logic [127:0] camera_ui_axis_tdata;
+    logic         camera_ui_axis_tlast;
+    logic         camera_ui_axis_tready;
+    logic         camera_ui_axis_tvalid;
+    logic         camera_ui_axis_prog_empty;
+
+    // FIFO data queue of 128-bit messages, crosses clock domains to the 81.25MHz
+    // UI clock of the memory interface
+    ddr_fifo_wrap camera_data_fifo(
+        .sender_rst(sys_rst_camera),
+        .sender_clk(clk_camera),
+        .sender_axis_tvalid(camera_axis_tvalid),
+        .sender_axis_tready(camera_axis_tready),
+        .sender_axis_tdata(camera_axis_tdata),
+        .sender_axis_tlast(camera_axis_tlast),
+        .receiver_clk(clk_ui),
+        .receiver_axis_tvalid(camera_ui_axis_tvalid),
+        .receiver_axis_tready(camera_ui_axis_tready),
+        .receiver_axis_tdata(camera_ui_axis_tdata),
+        .receiver_axis_tlast(camera_ui_axis_tlast),
+        .receiver_axis_prog_empty(camera_ui_axis_prog_empty));
+
+    logic [127:0] display_ui_axis_tdata;
+    logic         display_ui_axis_tlast;
+    logic         display_ui_axis_tready;
+    logic         display_ui_axis_tvalid;
+    logic         display_ui_axis_prog_full;
+
+    // Signals for MIG IP
+    // MIG UI --> generic outputs
+    logic [26:0]  app_addr;
+    logic [2:0]   app_cmd;
+    logic         app_en;
+    // MIG UI --> write outputs
+    logic [127:0] app_wdf_data;
+    logic         app_wdf_end;
+    logic         app_wdf_wren;
+    logic [15:0]  app_wdf_mask;
+    // MIG UI --> read inputs
+    logic [127:0] app_rd_data;
+    logic         app_rd_data_end;
+    logic         app_rd_data_valid;
+    // MIG UI --> generic inputs
+    logic         app_rdy;
+    logic         app_wdf_rdy;
+    // MIG UI --> misc
+    logic         app_sr_req; 
+    logic         app_ref_req;
+    logic         app_zq_req; 
+    logic         app_sr_active;
+    logic         app_ref_ack;
+    logic         app_zq_ack;
+    logic         init_calib_complete;
+
+    // traffic generator handles reads/write issued to the MIG IP,
+    // which in turn handles the bus to the DDR chip.
+    traffic_generator readwrite_looper (
+        // outputs
+        .app_addr         (app_addr[26:0]),
+        .app_cmd          (app_cmd[2:0]),
+        .app_en           (app_en),
+        .app_wdf_data     (app_wdf_data[127:0]),
+        .app_wdf_end      (app_wdf_end),
+        .app_wdf_wren     (app_wdf_wren),
+        .app_wdf_mask     (app_wdf_mask[15:0]),
+        .app_sr_req       (app_sr_req),
+        .app_ref_req      (app_ref_req),
+        .app_zq_req       (app_zq_req),
+        .write_axis_ready (camera_ui_axis_tready),
+        .read_axis_data   (display_ui_axis_tdata),
+        .read_axis_tlast  (display_ui_axis_tlast),
+        .read_axis_valid  (display_ui_axis_tvalid),
+        // inputs
+        .clk_in               (clk_ui),
+        .rst_in               (sys_rst_ui),
+        .app_rd_data          (app_rd_data[127:0]),
+        .app_rd_data_end      (app_rd_data_end),
+        .app_rd_data_valid    (app_rd_data_valid),
+        .app_rdy              (app_rdy),
+        .app_wdf_rdy          (app_wdf_rdy),
+        .app_sr_active        (app_sr_active),
+        .app_ref_ack          (app_ref_ack),
+        .app_zq_ack           (app_zq_ack),
+        .init_calib_complete  (init_calib_complete),
+        .write_axis_data      (camera_ui_axis_tdata),
+        .write_axis_tlast     (camera_ui_axis_tlast),
+        .write_axis_valid     (camera_ui_axis_tvalid),
+        .write_axis_smallpile (camera_ui_axis_prog_empty),
+        .read_axis_af         (display_ui_axis_prog_full),
+        .read_axis_ready      (display_ui_axis_tready));
+
+    // DDR3 MIG IP
+    ddr3_mig ddr3_mig_inst(
+        .ddr3_dq(ddr3_dq),
+        .ddr3_dqs_n(ddr3_dqs_n),
+        .ddr3_dqs_p(ddr3_dqs_p),
+        .ddr3_addr(ddr3_addr),
+        .ddr3_ba(ddr3_ba),
+        .ddr3_ras_n(ddr3_ras_n),
+        .ddr3_cas_n(ddr3_cas_n),
+        .ddr3_we_n(ddr3_we_n),
+        .ddr3_reset_n(ddr3_reset_n),
+        .ddr3_ck_p(ddr3_ck_p),
+        .ddr3_ck_n(ddr3_ck_n),
+        .ddr3_cke(ddr3_cke),
+        .ddr3_dm(ddr3_dm),
+        .ddr3_odt(ddr3_odt),
+        .sys_clk_i(clk_migref),
+        .app_addr(app_addr),
+        .app_cmd(app_cmd),
+        .app_en(app_en),
+        .app_wdf_data(app_wdf_data),
+        .app_wdf_end(app_wdf_end),
+        .app_wdf_wren(app_wdf_wren),
+        .app_rd_data(app_rd_data),
+        .app_rd_data_end(app_rd_data_end),
+        .app_rd_data_valid(app_rd_data_valid),
+        .app_rdy(app_rdy),
+        .app_wdf_rdy(app_wdf_rdy), 
+        .app_sr_req(app_sr_req),
+        .app_ref_req(app_ref_req),
+        .app_zq_req(app_zq_req),
+        .app_sr_active(app_sr_active),
+        .app_ref_ack(app_ref_ack),
+        .app_zq_ack(app_zq_ack),
+        .ui_clk(clk_ui), 
+        .ui_clk_sync_rst(sys_rst_ui),
+        .app_wdf_mask(app_wdf_mask),
+        .init_calib_complete(init_calib_complete),
+        .sys_rst(!sys_rst_migref));
+
+    logic [127:0] display_axis_tdata;
+    logic         display_axis_tlast;
+    logic         display_axis_tready;
+    logic         display_axis_tvalid;
+    logic         display_axis_prog_empty;
+
+    ddr_fifo_wrap pdfifo(
+        .sender_rst(sys_rst_ui),
+        .sender_clk(clk_ui),
+        .sender_axis_tvalid(display_ui_axis_tvalid),
+        .sender_axis_tready(display_ui_axis_tready),
+        .sender_axis_tdata(display_ui_axis_tdata),
+        .sender_axis_tlast(display_ui_axis_tlast),
+        .sender_axis_prog_full(display_ui_axis_prog_full),
+        .receiver_clk(clk_pixel),
+        .receiver_axis_tvalid(display_axis_tvalid),
+        .receiver_axis_tready(display_axis_tready),
+        .receiver_axis_tdata(display_axis_tdata),
+        .receiver_axis_tlast(display_axis_tlast),
+        .receiver_axis_prog_empty(display_axis_prog_empty));
+
+    logic frame_buff_tvalid;
+    logic frame_buff_tready;
+    logic [15:0] frame_buff_tdata;
+    logic        frame_buff_tlast;
+
+    unstacker unstacker_inst(
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .chunk_tvalid(display_axis_tvalid),
+        .chunk_tready(display_axis_tready),
+        .chunk_tdata(display_axis_tdata),
+        .chunk_tlast(display_axis_tlast),
+        .pixel_tvalid(frame_buff_tvalid),
+        .pixel_tready(frame_buff_tready),
+        .pixel_tdata(frame_buff_tdata),
+        .pixel_tlast(frame_buff_tlast));
+
+    assign frame_buff_dram = frame_buff_tvalid ? frame_buff_tdata : 16'h2277;
+    assign frame_buff_tready = active_draw_hdmi && (!frame_buff_tlast || (hcount_hdmi == 1279 && vcount_hdmi == 719));
+
+    //-------------- END DRAM STUFF --------------//
+
+    //-------------- END CAMERA INPUT HANDLING --------------//
 
     //split fame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
     //remapped frame_buffer outputs with 8 bits for r, g, b
@@ -308,8 +538,6 @@ module top_level (
     assign ss0_c = ss_c; //control upper four digit's cathodes!
     assign ss1_c = ss_c; //same as above but for lower four digits!
 
-    //Center of Mass Calculation: (you need to do)
-    //using x_com_calc and y_com_calc values
     //Center of Mass:
     center_of_mass com_m(
         .clk_in(clk_pixel),
@@ -322,7 +550,6 @@ module top_level (
         .y_out(y_com_calc),
         .valid_out(new_com)
     );
-    //grab logic for above
     //update center of mass x_com, y_com based on new_com signal
     always_ff @(posedge clk_pixel) begin
         if (sys_rst_pixel) begin
@@ -363,12 +590,11 @@ module top_level (
     );
 
     // Video Mux: select from the different display modes based on switch values
-    //used with switches for display selections
     logic [1:0] display_choice;
     logic [1:0] target_choice;
 
-    assign display_choice = sw[6:5]; //was [5:4]; not anymore
-    assign target_choice =  {1'b0,sw[7]}; //was [7:6]; not anymore
+    assign display_choice = sw[6:5];
+    assign target_choice  = {1'b0,sw[7]};
 
     //choose what to display from the camera:
     // * 'b00:  normal camera out
@@ -391,20 +617,15 @@ module top_level (
         .thresholded_pixel_in(mask), //one bit mask signal
         .crosshair_in({ch_red, ch_green, ch_blue}),
         .com_sprite_pixel_in({img_red, img_green, img_blue}),
-        .pixel_out({red,green,blue}) //output to tmds
+        .pixel_out({red, green, blue}) //output to tmds
     );
 
-    // HDMI Output: just like before!
+    //-------------- HDMI OUTPUT --------------//
 
-    logic [9:0] tmds_10b [0:2]; //output of each TMDS encoder!
-    logic       tmds_signal [2:0]; //output of each TMDS serializer!
+    logic [9:0] tmds_10b [0:2];    // output of each TMDS encoder
+    logic       tmds_signal [2:0]; // output of each TMDS serializer
 
-    //three tmds_encoders (blue, green, red)
-    //note green should have no control signal like red
-    //the blue channel DOES carry the two sync signals:
-    //  * control_in[0] = horizontal sync signal
-    //  * control_in[1] = vertical sync signal
-
+    // TMDS encoders (red, green, blue)
     tmds_encoder tmds_red(
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
@@ -429,7 +650,7 @@ module top_level (
         .ve_in(active_draw_hdmi),
         .tmds_out(tmds_10b[0]));
 
-    // tmds_serializers (blue, green, red):
+    // TMDS serializers (red, green, blue):
     tmds_serializer red_ser(
         .clk_pixel_in(clk_pixel),
         .clk_5x_in(clk_5x),
@@ -449,19 +670,15 @@ module top_level (
         .tmds_in(tmds_10b[0]),
         .tmds_out(tmds_signal[0]));
 
-    //output buffers generating differential signals:
-    //three for the r,g,b signals and one that is at the pixel clock rate
-    //the HDMI receivers use recover logic coupled with the control signals asserted
-    //during blanking and sync periods to synchronize their faster bit clocks off
-    //of the slower pixel clock (so they can recover a clock of about 742.5 MHz from
-    //the slower 74.25 MHz clock)
+    // Output buffers generating differential signals:
     OBUFDS OBUFDS_blue (.I(tmds_signal[0]), .O(hdmi_tx_p[0]), .OB(hdmi_tx_n[0]));
     OBUFDS OBUFDS_green(.I(tmds_signal[1]), .O(hdmi_tx_p[1]), .OB(hdmi_tx_n[1]));
     OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
     OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
 
-    // Nothing To Touch Down Here:
-    // register writes to the camera
+    //-------------- END HDMI OUTPUT --------------//
+
+    //-------------- CAMERA REGISTER WRITE --------------//
 
     logic busy, bus_active;
     logic cr_init_valid, cr_init_ready;
@@ -509,12 +726,11 @@ module top_level (
     logic con_scl_i, con_scl_o, con_scl_t;
     logic con_sda_i, con_sda_o, con_sda_t;
 
-    // NOTE these also have pullup specified in the xdc file!
-    // access our inouts properly as tri-state pins
+    // Access our IO properly as tri-state pins
     IOBUF IOBUF_scl (.I(con_scl_o), .IO(i2c_scl), .O(con_scl_i), .T(con_scl_t) );
     IOBUF IOBUF_sda (.I(con_sda_o), .IO(i2c_sda), .O(con_sda_i), .T(con_sda_t) );
 
-    // provided module to send data BRAM -> I2C
+    // Provided module to send data BRAM -> I2C
     camera_registers crw (
         .clk_in(clk_camera),
         .rst_in(sys_rst_camera),
@@ -529,11 +745,13 @@ module top_level (
         .bram_dout(registers_dout),
         .bram_addr(registers_addr));
 
-    // a handful of debug signals for writing to registers
+    // Debug signals for writing to registers
     assign led[0] = crw.bus_active;
     assign led[1] = cr_init_valid;
     assign led[2] = cr_init_ready;
     assign led[15:3] = 0;
+
+    //-------------- END CAMERA REGISTER WRITE --------------//
 
 endmodule // top_level
 
