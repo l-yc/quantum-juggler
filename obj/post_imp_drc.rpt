@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Thu Nov 14 14:49:36 2024
-| Host         : eecs-digital-17 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Fri Nov 15 14:48:02 2024
+| Host         : eecs-digital-07 running 64-bit Ubuntu 24.04.1 LTS
 | Command      : report_drc -file obj/post_imp_drc.rpt
 | Design       : top_level
 | Device       : xc7s50csga324-1
@@ -24,79 +24,60 @@ Table of Contents
       Design limits: <entire design considered>
            Ruledeck: default
              Max violations: <unlimited>
-             Violations found: 13
-+-----------+----------+-------------------+------------+
-| Rule      | Severity | Description       | Violations |
-+-----------+----------+-------------------+------------+
-| PDRC-153  | Warning  | Gated clock check | 12         |
-| RTSTAT-10 | Warning  | No routable loads | 1          |
-+-----------+----------+-------------------+------------+
+             Violations found: 6
++-----------+----------+------------------------+------------+
+| Rule      | Severity | Description            | Violations |
++-----------+----------+------------------------+------------+
+| PDRC-153  | Warning  | Gated clock check      | 4          |
+| REQP-1709 | Warning  | Clock output buffering | 1          |
+| RTSTAT-10 | Warning  | No routable loads      | 1          |
++-----------+----------+------------------------+------------+
 
 2. REPORT DETAILS
 -----------------
 PDRC-153#1 Warning
 Gated clock check  
-Net ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[0]__0 is a gated clock net sourced by a combinational pin ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[0]_i_2__1/O, cell ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[0]_i_2__1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Net filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2/O, cell filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
 Related violations: <none>
 
 PDRC-153#2 Warning
 Gated clock check  
-Net ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[1]__0 is a gated clock net sourced by a combinational pin ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[1]_i_2__1/O, cell ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[1]_i_2__1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]_i_2/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
 Related violations: <none>
 
 PDRC-153#3 Warning
 Gated clock check  
-Net ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[2]__0 is a gated clock net sourced by a combinational pin ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[2]_i_2__1/O, cell ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[2]_i_2__1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]_i_2/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
 Related violations: <none>
 
 PDRC-153#4 Warning
 Gated clock check  
-Net ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[3]__0 is a gated clock net sourced by a combinational pin ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[3]_i_2__1/O, cell ds_lbuff/genblk1[1].ram_indices_counter/write_enable_reg[3]_i_2__1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]_i_2/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
 Related violations: <none>
 
-PDRC-153#5 Warning
-Gated clock check  
-Net filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2__0/O, cell filtern/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2__0. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#6 Warning
-Gated clock check  
-Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]_i_2__0/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[0]_i_2__0. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#7 Warning
-Gated clock check  
-Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]_i_2__0/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[1]_i_2__0. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#8 Warning
-Gated clock check  
-Net filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]__0 is a gated clock net sourced by a combinational pin filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]_i_2__0/O, cell filtern/m_lbuff/genblk1[3].ram_indices_counter/write_enable_reg[2]_i_2__0. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#9 Warning
-Gated clock check  
-Net genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[0]__0 is a gated clock net sourced by a combinational pin genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[0]_i_2/O, cell genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[0]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#10 Warning
-Gated clock check  
-Net genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[1]__0 is a gated clock net sourced by a combinational pin genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[1]_i_2/O, cell genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[1]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#11 Warning
-Gated clock check  
-Net genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[2]__0 is a gated clock net sourced by a combinational pin genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[2]_i_2/O, cell genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[2]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
-Related violations: <none>
-
-PDRC-153#12 Warning
-Gated clock check  
-Net genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]__0 is a gated clock net sourced by a combinational pin genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2/O, cell genblk1[0].filterm/m_lbuff/genblk1[2].ram_indices_counter/write_enable_reg[3]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+REQP-1709#1 Warning
+Clock output buffering  
+PLLE2_ADV connectivity violation. The signal ddr3_mig_inst/u_ddr3_mig_mig/u_ddr3_infrastructure/pll_clk3_out on the ddr3_mig_inst/u_ddr3_mig_mig/u_ddr3_infrastructure/plle2_i/CLKOUT3 pin of ddr3_mig_inst/u_ddr3_mig_mig/u_ddr3_infrastructure/plle2_i does not drive the same kind of BUFFER load as the other CLKOUT pins. Routing from the different buffer types will not be phase aligned.
 Related violations: <none>
 
 RTSTAT-10#1 Warning
 No routable loads  
-1 net(s) have no routable loads. The problem bus(es) and/or net(s) are cdc_fifo/U0/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.wr/gwas.wsts/ram_full_i.
+71 net(s) have no routable loads. The problem bus(es) and/or net(s) are camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[128],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[129],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[130],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[131],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[132],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[133],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[134],
+camera_data_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[135],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[128],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[129],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[130],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[131],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[132],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[133],
+pdfifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/doutb[134]
+ (the first 15 of 71 listed nets/buses).
 Related violations: <none>
 
 
