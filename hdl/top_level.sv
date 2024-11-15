@@ -129,8 +129,7 @@ module top_level (
     logic [10:0] f0_hcount; // hcount from filter0 module
     logic [9:0] f0_vcount;  // vcount from filter0 module
     logic [15:0] f0_pixel;  // pixel data from filter0 module
-    logic f0_valid; // valid signals for filter0 module
-    // full resolution filter
+    logic f0_valid;         // valid signals for filter0 module
     filter #(.HRES(1280),.VRES(720))
     filtern(
         .clk_in(clk_pixel),
@@ -144,179 +143,37 @@ module top_level (
         .hcount_out(f0_hcount),
         .vcount_out(f0_vcount));
 
-    //----
-    logic [10:0] lb_hcount; // hcount to filter modules
-    logic [9:0] lb_vcount;  // vcount to filter modules
-    logic [15:0] lb_pixel;  // pixel data to filter modules
-    logic lb_valid; //valid signals to filter modules
+    logic [10:0] ds_hcount; // hcount to downsample
+    logic [9:0] ds_vcount;  // vcount to downsample
+    logic [15:0] ds_pixel;  // pixel data to downsample
+    logic ds_valid;         // valid signals to downsample
 
-    //selection logic to either go through (btn[1]=1)
-    //or bypass (btn[1]==0) the first filter
-    //in the first part of lab as you develop line buffer, you'll want to bypass
-    //since your filter won't be working, but it would be good to test the
-    //downsampling line buffer below on its own
-    always_ff @(posedge clk_pixel) begin
+    // Either go through (btn[2]=0) or bypass (btn[2]==1) Gaussian blur
+    always_comb @(posedge clk_pixel) begin
         if (btn[2]) begin
             ds_hcount = cdc_hcount;
             ds_vcount = cdc_vcount;
-            ds_pixel = cdc_pixel;
-            ds_valid = cdc_valid;
+            ds_pixel  = cdc_pixel;
+            ds_valid  = cdc_valid;
         end else begin
             ds_hcount = f0_hcount;
             ds_vcount = f0_vcount;
-            ds_pixel = f0_pixel;
-            ds_valid = f0_valid;
+            ds_pixel  = f0_pixel;
+            ds_valid  = f0_valid;
         end
-    end
-
-    //----
-    //A line buffer that, in conjunction with the control signal will down sample
-    //the camera (or f0 filter) values from 1280x720 to 320x180
-    //in reality we could get by without this, but it does make things a little easier
-    //and we've also added it since it gives us a means of testing the line buffer
-    //design outside of the filter.
-    logic [2:0][15:0] lb_buffs; //grab output of down sample line buffer
-    logic ds_control; //controlling when to write (every fourth pixel and line)
-    logic [10:0] ds_hcount;  //hcount to downsample line buffer
-    logic [9:0] ds_vcount; //vcount to downsample line buffer
-    logic [15:0] ds_pixel; //pixel data to downsample line buffer
-    logic ds_valid; //valid signals to downsample line buffer
-    assign ds_control = ds_valid && (ds_hcount[1:0]==2'b0) && (ds_vcount[1:0]==2'b0);
-    line_buffer #(.HRES(320), .VRES(180)) ds_lbuff (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .data_valid_in(ds_control),
-        .pixel_data_in(ds_pixel),
-        .hcount_in(ds_hcount[10:2]),
-        .vcount_in(ds_vcount[9:2]),
-        .data_valid_out(lb_valid),
-        .line_buffer_out(lb_buffs),
-        .hcount_out(lb_hcount),
-        .vcount_out(lb_vcount));
-
-    assign lb_pixel = lb_buffs[1]; //pass on only the middle one.
-
-    //----
-    //Create six different filters that all exist in parallel
-    //The outputs of all six filters are fed into the unpacked arrays below:
-    logic [10:0] f_hcount [5:0];  //hcount from filter modules
-    logic [9:0] f_vcount [5:0]; //vcount from filter modules
-    logic [15:0] f_pixel [5:0]; //pixel data from filter modules
-    logic f_valid [5:0]; //valid signals for filter modules
-
-    //using generate/genvar, create five *Different* instances of the
-    //filter module (you'll write that).  Each filter will implement a different
-    //kernel
-    generate
-        genvar i;
-        for (i=0; i<6; i=i+1) begin
-            filter #(.HRES(320),.VRES(180)) filterm (
-                .clk_in(clk_pixel),
-                .rst_in(sys_rst_pixel),
-                .data_valid_in(lb_valid),
-                .pixel_data_in(lb_pixel),
-                .hcount_in(lb_hcount),
-                .vcount_in(lb_vcount),
-                .data_valid_out(f_valid[i]),
-                .pixel_data_out(f_pixel[i]),
-                .hcount_out(f_hcount[i]),
-                .vcount_out(f_vcount[i])
-            );
-        end
-    endgenerate
-
-    //combine hor and vert signals from filters 4 and 5 for special signal:
-    logic [7:0] fcomb_r, fcomb_g, fcomb_b;
-    assign fcomb_r = (f_pixel[4][15:11]+f_pixel[5][15:11])>>1;
-    assign fcomb_g = (f_pixel[4][10:5]+f_pixel[5][10:5])>>1;
-    assign fcomb_b = (f_pixel[4][4:0]+f_pixel[5][4:0])>>1;
-
-    //------
-    // Choose which filter to use
-    // based on values of sw[2:0] select which filter output gets handed on to the
-    // next module. We must make sure to route hcount, vcount, pixels and valid signal
-    // for each module.  Could have done this with a for loop as well!  Think
-    // about it!
-    logic [10:0] fmux_hcount; //hcount from filter mux
-    logic [9:0]  fmux_vcount; //vcount from filter mux
-    logic [15:0] fmux_pixel; //pixel data from filter mux
-    logic fmux_valid; //data valid from filter mux
-
-    //000 Identity Kernel
-    //001 Gaussian Blur
-    //010 Sharpen
-    //011 Ridge Detection
-    //100 Sobel Y-axis Edge Detection
-    //101 Sobel X-axis Edge Detection
-    //110 Total Sobel Edge Detection
-    //111 Output of Line Buffer Directly (Helpful for debugging line buffer in first part)
-    always_ff @(posedge clk_pixel)begin
-        case (sw[2:0])
-            3'b000: begin
-                fmux_hcount <= f_hcount[0];
-                fmux_vcount <= f_vcount[0];
-                fmux_pixel <= f_pixel[0];
-                fmux_valid <= f_valid[0];
-            end
-            3'b001: begin
-                fmux_hcount <= f_hcount[1];
-                fmux_vcount <= f_vcount[1];
-                fmux_pixel <= f_pixel[1];
-                fmux_valid <= f_valid[1];
-            end
-            3'b010: begin
-                fmux_hcount <= f_hcount[2];
-                fmux_vcount <= f_vcount[2];
-                fmux_pixel <= f_pixel[2];
-                fmux_valid <= f_valid[2];
-            end
-            3'b011: begin
-                fmux_hcount <= f_hcount[3];
-                fmux_vcount <= f_vcount[3];
-                fmux_pixel <= f_pixel[3];
-                fmux_valid <= f_valid[3];
-            end
-            3'b100: begin
-                fmux_hcount <= f_hcount[4];
-                fmux_vcount <= f_vcount[4];
-                fmux_pixel <= f_pixel[4];
-                fmux_valid <= f_valid[4];
-            end
-            3'b101: begin
-                fmux_hcount <= f_hcount[5];
-                fmux_vcount <= f_vcount[5];
-                fmux_pixel <= f_pixel[5];
-                fmux_valid <= f_valid[5];
-            end
-            3'b110: begin
-                fmux_hcount <= f_hcount[4];
-                fmux_vcount <= f_vcount[4];
-                fmux_pixel <= {fcomb_r[4:0],fcomb_g[5:0],fcomb_b[4:0]};
-                fmux_valid <= f_valid[4]&&f_valid[5];
-            end
-            default: begin
-                fmux_hcount <= lb_hcount;
-                fmux_vcount <= lb_vcount;
-                fmux_pixel <= lb_pixel;
-                fmux_valid <= lb_valid;
-            end
-        endcase
     end
 
     localparam FB_DEPTH = 320*180;
     localparam FB_SIZE = $clog2(FB_DEPTH);
-    logic [FB_SIZE-1:0] addra; //used to specify address to write to in frame buffer
-    logic valid_camera_mem; //used to enable writing pixel data to frame buffer
-    logic [15:0] camera_mem; //used to pass pixel data into frame buffer
+    logic [FB_SIZE-1:0] addra; // address to write to in frame buffer
+    logic valid_camera_mem;    // enable writing pixel data to frame buffer
+    logic [15:0] camera_mem;   // pixel data into frame buffer
 
-    //because the down sampling already happened upstream, there's no need to do here.
     always_ff @(posedge clk_pixel) begin
-        if(fmux_valid) begin
-            addra <= fmux_hcount + fmux_vcount * 320;
-            camera_mem <= fmux_pixel;
-            valid_camera_mem <= 1;
-        end else begin
-            valid_camera_mem <= 0;
+        valid_camera_mem <= ds_valid;
+        if (ds_hcount[1:0] == 0 && ds_vcount[1:0] == 0) begin
+            addra <= (ds_hcount >> 2) + (ds_vcount >> 2) * 320;
+            camera_mem <= ds_pixel;
         end
     end
 
