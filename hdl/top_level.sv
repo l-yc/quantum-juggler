@@ -42,7 +42,7 @@ module top_level (
     output wire         ddr3_odt
     );
 
-    // shut up those RGBs
+    // Shut up those RGBs
     assign rgb0 = 0;
     assign rgb1 = 0;
 
@@ -74,14 +74,13 @@ module top_level (
         .clk_100(clk_100_passthrough),
         .reset(0));
 
-    // assign camera's xclk to pmod port: drive the operating clock of the camera!
-    // this port also is specifically set to high drive by the XDC file.
+    // Assign camera's xclk to pmod port: drive the operating clock of the camera
     assign cam_xclk = clk_xc;
-    assign sys_rst_camera = btn[0]; //use for resetting camera side
-    assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side
+    assign sys_rst_camera = btn[0];
+    assign sys_rst_pixel = btn[0];
     assign sys_rst_migref = btn[0];
 
-    // video signal generator signals
+    // Video signal generator signals
     logic        hsync_hdmi;
     logic        vsync_hdmi;
     logic [10:0] hcount_hdmi;
@@ -91,12 +90,12 @@ module top_level (
     logic [5:0]  frame_count_hdmi;
     logic        nf_hdmi;
 
-    // rgb output values
+    // RGB output values
     logic [7:0] red, green, blue;
 
     //-------------- CAMERA INPUT HANDLING --------------//
 
-    // synchronizers to prevent metastability
+    // Synchronizers to prevent metastability
     logic [7:0] camera_d_buf [1:0];
     logic       cam_hsync_buf [1:0];
     logic       cam_vsync_buf [1:0];
@@ -131,10 +130,7 @@ module top_level (
     logic [15:0] frame_buff_raw;  // select between the two!
     assign frame_buff_raw = sw[0] ? frame_buff_dram : frame_buff_bram;
 
-    // clock domain cross (from clk_camera to clk_pixel)
-    // switching from camera clock domain to pixel clock domain early
-    // this lets us do convolution on the 74.25 MHz clock rather than the
-    // 200 MHz clock domain that the camera lives on.
+    // Clock domain cross from clk_camera (200 MHz) to clk_pixel (74.25 MHz)
     logic empty;
     logic cdc_valid;
     logic [15:0] cdc_pixel;
@@ -153,22 +149,38 @@ module top_level (
 
     //-------------- GAUSSIAN BLUR HERE --------------//
 
-    logic [10:0] f0_hcount; // hcount from filter0 module
-    logic [9:0] f0_vcount;  // vcount from filter0 module
-    logic [15:0] f0_pixel;  // pixel data from filter0 module
-    logic f0_valid;         // valid signals for filter0 module
-    filter #(.HRES(1280),.VRES(720))
-    filtern(
+    localparam NUM_BLUR = 3; 
+    logic [10:0] f_hcount [NUM_BLUR-1:0]; // hcount from filter modules
+    logic [9:0] f_vcount [NUM_BLUR-1:0];  // vcount from filter modules
+    logic [15:0] f_pixel [NUM_BLUR-1:0];  // pixel data from filter modules
+    logic f_valid [NUM_BLUR-1:0];         // valid signals for filter modules
+    filter #(.HRES(1280),.VRES(720)) filter_0 (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .data_valid_in(cdc_valid),
         .pixel_data_in(cdc_pixel),
         .hcount_in(cdc_hcount),
         .vcount_in(cdc_vcount),
-        .data_valid_out(f0_valid),
-        .pixel_data_out(f0_pixel),
-        .hcount_out(f0_hcount),
-        .vcount_out(f0_vcount));
+        .data_valid_out(f_valid[0]),
+        .pixel_data_out(f_pixel[0]),
+        .hcount_out(f_hcount[0]),
+        .vcount_out(f_vcount[0]));
+    generate
+        genvar i;
+        for (i=1; i<NUM_BLUR; i=i+1) begin
+            filter #(.HRES(1280),.VRES(720)) filter (
+                .clk_in(clk_pixel),
+                .rst_in(sys_rst_pixel),
+                .data_valid_in(f_valid[i-1]),
+                .pixel_data_in(f_pixel[i-1]),
+                .hcount_in(f_hcount[i-1]),
+                .vcount_in(f_vcount[i-1]),
+                .data_valid_out(f_valid[i]),
+                .pixel_data_out(f_pixel[i]),
+                .hcount_out(f_hcount[i]),
+                .vcount_out(f_vcount[i]));
+        end
+    endgenerate
 
     logic [10:0] ds_hcount; // hcount to downsample
     logic [9:0] ds_vcount;  // vcount to downsample
@@ -183,10 +195,10 @@ module top_level (
             ds_pixel  = cdc_pixel;
             ds_valid  = cdc_valid;
         end else begin
-            ds_hcount = f0_hcount;
-            ds_vcount = f0_vcount;
-            ds_pixel  = f0_pixel;
-            ds_valid  = f0_valid;
+            ds_hcount = f_hcount[NUM_BLUR-1];
+            ds_vcount = f_vcount[NUM_BLUR-1];
+            ds_pixel  = f_pixel[NUM_BLUR-1];
+            ds_valid  = f_valid[NUM_BLUR-1];
         end
     end
 
@@ -202,6 +214,7 @@ module top_level (
     logic valid_camera_mem;    // enable writing pixel data to frame buffer
     logic [15:0] camera_mem;   // pixel data into frame buffer
 
+    // 4X downscale
     always_ff @(posedge clk_pixel) begin
         valid_camera_mem <= ds_valid;
         if (ds_hcount[1:0] == 0 && ds_vcount[1:0] == 0) begin
@@ -210,15 +223,15 @@ module top_level (
         end
     end
 
-    // frame buffer from IP
+    // Frame buffer from IP
     blk_mem_gen_0 frame_buffer (
-        .addra(addra), //pixels are stored using this math
+        .addra(addra),
         .clka(clk_pixel),
         .wea(valid_camera_mem),
         .dina(camera_mem),
         .ena(1'b1),
-        .douta(), //never read from this side
-        .addrb(addrb),//transformed lookup pixel
+        .douta(),
+        .addrb(addrb),
         .dinb(16'b0),
         .clkb(clk_pixel),
         .web(1'b0),
@@ -227,8 +240,8 @@ module top_level (
 
     // 4X upscale
     always_ff @(posedge clk_pixel)begin
-        addrb <= (319-(hcount_hdmi >> 2)) + 320*(vcount_hdmi >> 2);
-        good_addrb <= (hcount_hdmi<1280)&&(vcount_hdmi<720);
+        addrb <= (hcount_hdmi >> 2) + 320 * (vcount_hdmi >> 2);
+        good_addrb <= (hcount_hdmi < 1280) && (vcount_hdmi < 720);
     end
 
     //-------------- END BRAM STUFF --------------//
@@ -242,7 +255,7 @@ module top_level (
     logic         camera_axis_tvalid;
     logic         camera_tlast;
 
-    // takes our 16-bit values and deserialize/stack them into 128-bit messages to write to DRAM
+    // Takes our 16-bit values and deserialize/stack them into 128-bit messages to write to DRAM
     stacker stacker_inst(
         .clk_in(clk_camera),
         .rst_in(sys_rst_camera),
@@ -309,7 +322,7 @@ module top_level (
     logic         app_zq_ack;
     logic         init_calib_complete;
 
-    // traffic generator handles reads/write issued to the MIG IP,
+    // Traffic generator handles reads/write issued to the MIG IP,
     // which in turn handles the bus to the DDR chip.
     traffic_generator readwrite_looper (
         // outputs
@@ -347,7 +360,7 @@ module top_level (
         .read_axis_ready      (display_ui_axis_tready));
 
     // DDR3 MIG IP
-    ddr3_mig ddr3_mig_inst(
+    ddr3_mig ddr3_mig_inst (
         .ddr3_dq(ddr3_dq),
         .ddr3_dqs_n(ddr3_dqs_n),
         .ddr3_dqs_p(ddr3_dqs_p),
@@ -392,7 +405,7 @@ module top_level (
     logic         display_axis_tvalid;
     logic         display_axis_prog_empty;
 
-    ddr_fifo_wrap pdfifo(
+    ddr_fifo_wrap pdfifo (
         .sender_rst(sys_rst_ui),
         .sender_clk(clk_ui),
         .sender_axis_tvalid(display_ui_axis_tvalid),
@@ -412,7 +425,7 @@ module top_level (
     logic [15:0] frame_buff_tdata;
     logic        frame_buff_tlast;
 
-    unstacker unstacker_inst(
+    unstacker unstacker_inst (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .chunk_tvalid(display_axis_tvalid),
@@ -431,26 +444,21 @@ module top_level (
 
     //-------------- END CAMERA INPUT HANDLING --------------//
 
-    //split fame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
-    //remapped frame_buffer outputs with 8 bits for r, g, b
+    // Split frame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
     logic [7:0] fb_red, fb_green, fb_blue;
     always_ff @(posedge clk_pixel)begin
-        fb_red <= good_addrb?{frame_buff_raw[15:11],3'b0}:8'b0;
-        fb_green <= good_addrb?{frame_buff_raw[10:5], 2'b0}:8'b0;
-        fb_blue <= good_addrb?{frame_buff_raw[4:0],3'b0}:8'b0;
+        fb_red   <= good_addrb ? {frame_buff_raw[15:11],3'b0} : 8'b0;
+        fb_green <= good_addrb ? {frame_buff_raw[10:5], 2'b0} : 8'b0;
+        fb_blue  <= good_addrb ? {frame_buff_raw[4:0],3'b0}   : 8'b0;
     end
-    // Pixel Processing pre-HDMI output
 
     // RGB to YCrCb
-
-    //output of rgb to ycrcb conversion (10 bits due to module):
-    logic [9:0] y_full, cr_full, cb_full; //ycrcb conversion of full pixel
-    //bottom 8 of y, cr, cb conversions:
-    logic [7:0] y, cr, cb; //ycrcb conversion of full pixel
-    //Convert RGB of full pixel to YCrCb
-    //See lecture 07 for YCrCb discussion.
-    //Module has a 3 cycle latency
-    rgb_to_ycrcb rgbtoycrcb_m(
+    logic [9:0] y_full, cr_full, cb_full; // ycrcb conversion of full pixel
+    logic [7:0] y, cr, cb;                // bottom 8 of y, cr, cb conversions
+    assign y = y_full[7:0];
+    assign cr = {!cr_full[7],cr_full[6:0]};
+    assign cb = {!cb_full[7],cb_full[6:0]};
+    rgb_to_ycrcb rgbtoycrcb_m (
         .clk_in(clk_pixel),
         .r_in(fb_red),
         .g_in(fb_green),
@@ -460,39 +468,10 @@ module top_level (
         .cb_out(cb_full)
     );
 
-    //channel select module (select which of six color channels to mask):
+    // Channel select module (select which of six color channels to mask):
     logic [2:0] channel_sel;
-    logic [7:0] selected_channel; //selected channels
-    //selected_channel could contain any of the six color channels depend on selection
-
-    //threshold module (apply masking threshold):
-    logic [7:0] lower_threshold;
-    logic [7:0] upper_threshold;
-    logic mask; //Whether or not thresholded pixel is 1 or 0
-
-    //Center of Mass variables (tally all mask=1 pixels for a frame and calculate their center of mass)
-    logic [10:0] x_com, x_com_calc; //long term x_com and output from module, resp
-    logic [9:0] y_com, y_com_calc; //long term y_com and output from module, resp
-    logic new_com; //used to know when to update x_com and y_com ...
-
-    //take lower 8 of full outputs.
-    // treat cr and cb as signed numbers, invert the MSB to get an unsigned equivalent ( [-128,128) maps to [0,256) )
-    assign y = y_full[7:0];
-    assign cr = {!cr_full[7],cr_full[6:0]};
-    assign cb = {!cb_full[7],cb_full[6:0]};
-
-    assign channel_sel = {1'b1, sw[4:3]}; //[3:1];
-    //modified from before...ignoring red, green, blue
-    // * 3'b000: green (not possible now)
-    // * 3'b001: red (not possible now)
-    // * 3'b010: blue (not possible now)
-    // * 3'b011: not valid
-    // * 3'b100: y (luminance)
-    // * 3'b101: Cr (Chroma Red)
-    // * 3'b110: Cb (Chroma Blue)
-    // * 3'b111: not valid
-    //Channel Select: Takes in the full RGB and YCrCb information and
-    // chooses one of them to output as an 8 bit value
+    logic [7:0] selected_channel;
+    assign channel_sel = {1'b1, sw[4:3]};
     channel_select mcs (
         .sel_in(channel_sel),
         .r_in(fb_red),
@@ -501,31 +480,25 @@ module top_level (
         .y_in(y),
         .cr_in(cr),
         .cb_in(cb),
-        .channel_out(selected_channel)
-    );
+        .channel_out(selected_channel));
 
-    //threshold values used to determine what value  passes:
+    // Threshold module (apply masking threshold):
+    logic [7:0] lower_threshold;
+    logic [7:0] upper_threshold;
+    logic mask;
     assign lower_threshold = {sw[11:8],4'b0};
     assign upper_threshold = {sw[15:12],4'b0};
-
-    //Thresholder: Takes in the full selected channedl and
-    //based on upper and lower bounds provides a binary mask bit
-    // * 1 if selected channel is within the bounds (inclusive)
-    // * 0 if selected channel is not within the bounds
     threshold mt (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .pixel_in(selected_channel),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
-        .mask_out(mask) //single bit if pixel within mask.
+        .mask_out(mask)
     );
 
-
+    // Seven-segment module
     logic [6:0] ss_c;
-    //modified version of seven segment display for showing
-    // thresholds and selected channel
-    // special customized version
     lab05_ssc mssc (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
@@ -533,24 +506,26 @@ module top_level (
         .ut_in(upper_threshold),
         .channel_sel_in(channel_sel),
         .cat_out(ss_c),
-        .an_out({ss0_an, ss1_an})
-    );
-    assign ss0_c = ss_c; //control upper four digit's cathodes!
-    assign ss1_c = ss_c; //same as above but for lower four digits!
+        .an_out({ss0_an, ss1_an}));
+    assign ss0_c = ss_c; // control upper four digit's cathodes
+    assign ss1_c = ss_c; // same as above but for lower four digits
 
-    //Center of Mass:
+    // Center of mass (tally all mask=1 pixels for a frame and calculate their center of mass)
+    logic [10:0] x_com, x_com_calc; // long term x_com and output from module, resp
+    logic [9:0] y_com, y_com_calc;  // long term y_com and output from module, resp
+    logic new_com;                  // used to know when to update x_com and y_com
     center_of_mass com_m(
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .x_in(hcount_hdmi),
         .y_in(vcount_hdmi),
-        .valid_in(mask), //aka threshold
+        .valid_in(mask),
         .tabulate_in((nf_hdmi)),
         .x_out(x_com_calc),
         .y_out(y_com_calc),
-        .valid_out(new_com)
-    );
-    //update center of mass x_com, y_com based on new_com signal
+        .valid_out(new_com));
+
+    // Update center of mass x_com, y_com based on new_com signal
     always_ff @(posedge clk_pixel) begin
         if (sys_rst_pixel) begin
             x_com <= 0;
@@ -561,19 +536,18 @@ module top_level (
         end
     end
 
-    // image_sprite output:
+    // Image sprite output TODO: REMOVE THIS
     logic [7:0] img_red, img_green, img_blue;
     assign img_red   = 0;
     assign img_green = 0;
     assign img_blue  = 0;
 
-    // crosshair output:
+    // Crosshair output
     logic [7:0] ch_red, ch_green, ch_blue;
-
     always_comb begin
-        ch_red   = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com))?8'hFF:8'h00;
-        ch_green = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com))?8'hFF:8'h00;
-        ch_blue  = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com))?8'hFF:8'h00;
+        ch_red   = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
+        ch_green = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
+        ch_blue  = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
     end
 
     // HDMI video signal generator
@@ -586,8 +560,7 @@ module top_level (
         .hs_out(hsync_hdmi),
         .nf_out(nf_hdmi),
         .ad_out(active_draw_hdmi),
-        .fc_out(frame_count_hdmi)
-    );
+        .fc_out(frame_count_hdmi));
 
     // Video Mux: select from the different display modes based on switch values
     logic [1:0] display_choice;
@@ -595,29 +568,16 @@ module top_level (
 
     assign display_choice = sw[6:5];
     assign target_choice  = {1'b0,sw[7]};
-
-    //choose what to display from the camera:
-    // * 'b00:  normal camera out
-    // * 'b01:  selected channel image in grayscale
-    // * 'b10:  masked pixel (all on if 1, all off if 0)
-    // * 'b11:  chroma channel with mask overtop as magenta
-    //
-    //then choose what to use with center of mass:
-    // * 'b00: nothing
-    // * 'b01: crosshair
-    // * 'b10: sprite on top
-    // * 'b11: nothing
-
     video_mux mvm(
-        .bg_in(display_choice), //choose background
-        .target_in(target_choice), //choose target
+        .bg_in(display_choice),    // choose background
+        .target_in(target_choice), // choose target
         .camera_pixel_in({fb_red, fb_green, fb_blue}),
-        .camera_y_in(y), //luminance
-        .channel_in(selected_channel), //current channel being drawn
-        .thresholded_pixel_in(mask), //one bit mask signal
+        .camera_y_in(y),
+        .channel_in(selected_channel), // current channel being drawn
+        .thresholded_pixel_in(mask),   // one bit mask signal
         .crosshair_in({ch_red, ch_green, ch_blue}),
         .com_sprite_pixel_in({img_red, img_green, img_blue}),
-        .pixel_out({red, green, blue}) //output to tmds
+        .pixel_out({red, green, blue}) // output to tmds
     );
 
     //-------------- HDMI OUTPUT --------------//
@@ -633,7 +593,6 @@ module top_level (
         .control_in(2'b0),
         .ve_in(active_draw_hdmi),
         .tmds_out(tmds_10b[2]));
-
     tmds_encoder tmds_green(
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
@@ -641,7 +600,6 @@ module top_level (
         .control_in(2'b0),
         .ve_in(active_draw_hdmi),
         .tmds_out(tmds_10b[1]));
-
     tmds_encoder tmds_blue(
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
@@ -682,8 +640,7 @@ module top_level (
 
     logic busy, bus_active;
     logic cr_init_valid, cr_init_ready;
-
-    logic  recent_reset;
+    logic recent_reset;
     always_ff @(posedge clk_camera) begin
         if (sys_rst_camera) begin
             recent_reset <= 1'b1;
@@ -753,8 +710,7 @@ module top_level (
 
     //-------------- END CAMERA REGISTER WRITE --------------//
 
-endmodule // top_level
-
+endmodule
 
 `default_nettype wire
 

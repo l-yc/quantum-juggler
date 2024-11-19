@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Fri Nov 15 14:47:25 2024
-| Host         : eecs-digital-07 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Tue Nov 19 15:04:03 2024
+| Host         : eecs-digital-23 running 64-bit Ubuntu 24.04.1 LTS
 | Command      : report_utilization -file obj/post_synth_util.rpt -hierarchical -hierarchical_depth 4
 | Design       : top_level
 | Device       : xc7s50csga324-1
@@ -22,7 +22,7 @@ Table of Contents
 +----------------------------------------------+-------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
 |                   Instance                   |                      Module                     | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
 +----------------------------------------------+-------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
-| top_level                                    |                                           (top) |       7280 |       6797 |     444 |   39 | 6264 |     33 |     11 |          7 |
+| top_level                                    |                                           (top) |       7699 |       7172 |     444 |   83 | 6986 |     41 |     11 |          7 |
 |   (top_level)                                |                                           (top) |         10 |         10 |       0 |    0 |  149 |      0 |      0 |          0 |
 |   blue_ser                                   |                                 tmds_serializer |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 |   camera_data_fifo                           |                        ddr_fifo_wrap__xdcDup__1 |        145 |        145 |       0 |    0 |  234 |      2 |      1 |          0 |
@@ -34,18 +34,18 @@ Table of Contents
 |         (xpm_fifo_base_inst)                 |                        xpm_fifo_base__xdcDup__1 |          6 |          6 |       0 |    0 |   22 |      0 |      0 |          0 |
 |         gen_cdc_pntr.rd_pntr_cdc_dc_inst     |                 xpm_cdc_gray__parameterized1__2 |         11 |         11 |       0 |    0 |   32 |      0 |      0 |          0 |
 |         gen_cdc_pntr.rd_pntr_cdc_inst        |                                 xpm_cdc_gray__5 |          9 |          9 |       0 |    0 |   28 |      0 |      0 |          0 |
-|         gen_cdc_pntr.rpw_gray_reg            |                             xpm_fifo_reg_vec_13 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
-|         gen_cdc_pntr.wpr_gray_reg            |                             xpm_fifo_reg_vec_14 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         gen_cdc_pntr.rpw_gray_reg            |                             xpm_fifo_reg_vec_35 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         gen_cdc_pntr.wpr_gray_reg            |                             xpm_fifo_reg_vec_36 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         gen_cdc_pntr.wr_pntr_cdc_dc_inst     |                 xpm_cdc_gray__parameterized0__2 |         11 |         11 |       0 |    0 |   48 |      0 |      0 |          0 |
 |         gen_cdc_pntr.wr_pntr_cdc_inst        |                                 xpm_cdc_gray__4 |          9 |          9 |       0 |    0 |   28 |      0 |      0 |          0 |
-|         gen_fwft.rdpp1_inst                  |                             xpm_counter_updn_15 |         10 |         10 |       0 |    0 |    2 |      0 |      0 |          0 |
+|         gen_fwft.rdpp1_inst                  |                             xpm_counter_updn_37 |         10 |         10 |       0 |    0 |    2 |      0 |      0 |          0 |
 |         gen_sdpram.xpm_memory_base_inst      |                              xpm_memory_base__2 |          0 |          0 |       0 |    0 |    0 |      2 |      1 |          0 |
-|         rdp_inst                             |             xpm_counter_updn__parameterized0_16 |         18 |         18 |       0 |    0 |    8 |      0 |      0 |          0 |
-|         rdpp1_inst                           |             xpm_counter_updn__parameterized1_17 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
-|         rst_d1_inst                          |                             xpm_fifo_reg_bit_18 |          3 |          3 |       0 |    0 |    1 |      0 |      0 |          0 |
-|         wrp_inst                             |             xpm_counter_updn__parameterized0_19 |          8 |          8 |       0 |    0 |    8 |      0 |      0 |          0 |
-|         wrpp1_inst                           |             xpm_counter_updn__parameterized1_20 |         13 |         13 |       0 |    0 |    7 |      0 |      0 |          0 |
-|         wrpp2_inst                           |             xpm_counter_updn__parameterized2_21 |          6 |          6 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         rdp_inst                             |             xpm_counter_updn__parameterized0_38 |         18 |         18 |       0 |    0 |    8 |      0 |      0 |          0 |
+|         rdpp1_inst                           |             xpm_counter_updn__parameterized1_39 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         rst_d1_inst                          |                             xpm_fifo_reg_bit_40 |          3 |          3 |       0 |    0 |    1 |      0 |      0 |          0 |
+|         wrp_inst                             |             xpm_counter_updn__parameterized0_41 |          8 |          8 |       0 |    0 |    8 |      0 |      0 |          0 |
+|         wrpp1_inst                           |             xpm_counter_updn__parameterized1_42 |         13 |         13 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         wrpp2_inst                           |             xpm_counter_updn__parameterized2_43 |          6 |          6 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         xpm_fifo_rst_inst                    |                         xpm_fifo_rst__xdcDup__1 |         18 |         18 |       0 |    0 |   19 |      0 |      0 |          0 |
 |   cdc_fifo                                   |                                            fifo |         39 |         39 |       0 |    0 |   82 |      1 |      0 |          0 |
 |     (cdc_fifo)                               |                                            fifo |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
@@ -56,7 +56,7 @@ Table of Contents
 |   com_m                                      |                                  center_of_mass |        331 |        331 |       0 |    0 |  382 |      0 |      0 |          0 |
 |     (com_m)                                  |                                  center_of_mass |         24 |         24 |       0 |    0 |  155 |      0 |      0 |          0 |
 |     x_divider                                |                                         divider |        154 |        154 |       0 |    0 |  114 |      0 |      0 |          0 |
-|     y_divider                                |                                      divider_12 |        153 |        153 |       0 |    0 |  113 |      0 |      0 |          0 |
+|     y_divider                                |                                      divider_34 |        153 |        153 |       0 |    0 |  113 |      0 |      0 |          0 |
 |   crw                                        |                                camera_registers |        106 |        106 |       0 |    0 |  104 |      0 |      0 |          0 |
 |     (crw)                                    |                                camera_registers |          8 |          8 |       0 |    0 |   42 |      0 |      0 |          0 |
 |     aia                                      |                                  addr_increment |          8 |          8 |       0 |    0 |    9 |      0 |      0 |          0 |
@@ -72,25 +72,49 @@ Table of Contents
 |         (u_memc_ui_top_std)                  |        ddr3_migmig_7series_v4_2_memc_ui_top_std |          0 |          0 |       0 |    0 |    1 |      0 |      0 |          0 |
 |         mem_intfc0                           |              ddr3_migmig_7series_v4_2_mem_intfc |       4567 |       4518 |      32 |   17 | 3299 |      0 |      0 |          0 |
 |         u_ui_top                             |                 ddr3_migmig_7series_v4_2_ui_top |        490 |        294 |     196 |    0 |  556 |      0 |      0 |          0 |
-|   filtern                                    |                                          filter |        265 |        243 |       0 |   22 |  371 |      4 |      0 |          0 |
-|     m_lbuff                                  |                                     line_buffer |         73 |         73 |       0 |    0 |   45 |      4 |      0 |          0 |
-|       (m_lbuff)                              |                                     line_buffer |          9 |          9 |       0 |    0 |   37 |      0 |      0 |          0 |
-|       genblk1[0].line_buffer_ram             |    xilinx_true_dual_port_read_first_1_clock_ram |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
-|       genblk1[0].ram_indices_counter         |                                     evt_counter |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
-|       genblk1[1].line_buffer_ram             |  xilinx_true_dual_port_read_first_1_clock_ram_9 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
-|       genblk1[1].ram_indices_counter         |                     evt_counter__parameterized0 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
-|       genblk1[2].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_10 |         48 |         48 |       0 |    0 |    0 |      1 |      0 |          0 |
-|       genblk1[2].ram_indices_counter         |                     evt_counter__parameterized1 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
-|       genblk1[3].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_11 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
-|       genblk1[3].ram_indices_counter         |                     evt_counter__parameterized2 |          8 |          8 |       0 |    0 |    2 |      0 |      0 |          0 |
-|     mconv                                    |                                     convolution |        192 |        170 |       0 |   22 |  326 |      0 |      0 |          0 |
+|   filter_0                                   |                                          filter |        231 |        209 |       0 |   22 |  361 |      4 |      0 |          0 |
+|     m_lbuff                                  |                                  line_buffer_24 |         73 |         73 |       0 |    0 |   45 |      4 |      0 |          0 |
+|       (m_lbuff)                              |                                  line_buffer_24 |          9 |          9 |       0 |    0 |   37 |      0 |      0 |          0 |
+|       genblk1[0].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_26 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[0].ram_indices_counter         |                                  evt_counter_27 |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[1].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_28 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[1].ram_indices_counter         |                  evt_counter__parameterized0_29 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[2].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_30 |         48 |         48 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[2].ram_indices_counter         |                  evt_counter__parameterized1_31 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[3].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_32 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[3].ram_indices_counter         |                  evt_counter__parameterized2_33 |          8 |          8 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     mconv                                    |                                  convolution_25 |        158 |        136 |       0 |   22 |  316 |      0 |      0 |          0 |
 |   frame_buffer                               |                                   blk_mem_gen_0 |        122 |        122 |       0 |    0 |   20 |     24 |      8 |          0 |
 |     (frame_buffer)                           |                                   blk_mem_gen_0 |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 |     U0                                       |                 blk_mem_gen_0blk_mem_gen_v8_4_8 |        122 |        122 |       0 |    0 |   20 |     24 |      8 |          0 |
 |       (U0)                                   |                 blk_mem_gen_0blk_mem_gen_v8_4_8 |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 |       inst_blk_mem_gen                       |           blk_mem_gen_0blk_mem_gen_v8_4_8_synth |        122 |        122 |       0 |    0 |   20 |     24 |      8 |          0 |
 |         gnbram.gnativebmg.native_blk_mem_gen |                    blk_mem_gen_0blk_mem_gen_top |        122 |        122 |       0 |    0 |   20 |     24 |      8 |          0 |
-|   green_ser                                  |                               tmds_serializer_0 |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
+|   genblk1[1].filter                          |                                        filter_0 |        226 |        204 |       0 |   22 |  361 |      4 |      0 |          0 |
+|     m_lbuff                                  |                                  line_buffer_14 |         69 |         69 |       0 |    0 |   45 |      4 |      0 |          0 |
+|       (m_lbuff)                              |                                  line_buffer_14 |          8 |          8 |       0 |    0 |   37 |      0 |      0 |          0 |
+|       genblk1[0].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_16 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[0].ram_indices_counter         |                                  evt_counter_17 |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[1].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_18 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[1].ram_indices_counter         |                  evt_counter__parameterized0_19 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[2].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_20 |         48 |         48 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[2].ram_indices_counter         |                  evt_counter__parameterized1_21 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[3].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_22 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[3].ram_indices_counter         |                  evt_counter__parameterized2_23 |          5 |          5 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     mconv                                    |                                  convolution_15 |        157 |        135 |       0 |   22 |  316 |      0 |      0 |          0 |
+|   genblk1[2].filter                          |                                        filter_1 |        242 |        220 |       0 |   22 |  371 |      4 |      0 |          0 |
+|     m_lbuff                                  |                                     line_buffer |         69 |         69 |       0 |    0 |   45 |      4 |      0 |          0 |
+|       (m_lbuff)                              |                                     line_buffer |          8 |          8 |       0 |    0 |   37 |      0 |      0 |          0 |
+|       genblk1[0].line_buffer_ram             |    xilinx_true_dual_port_read_first_1_clock_ram |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[0].ram_indices_counter         |                                     evt_counter |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[1].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_11 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[1].ram_indices_counter         |                     evt_counter__parameterized0 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[2].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_12 |         48 |         48 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[2].ram_indices_counter         |                     evt_counter__parameterized1 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       genblk1[3].line_buffer_ram             | xilinx_true_dual_port_read_first_1_clock_ram_13 |          0 |          0 |       0 |    0 |    0 |      1 |      0 |          0 |
+|       genblk1[3].ram_indices_counter         |                     evt_counter__parameterized2 |          5 |          5 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     mconv                                    |                                     convolution |        173 |        151 |       0 |   22 |  326 |      0 |      0 |          0 |
+|   green_ser                                  |                               tmds_serializer_2 |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 |   mcs                                        |                                  channel_select |          8 |          8 |       0 |    0 |    0 |      0 |      0 |          0 |
 |   mssc                                       |                                       lab05_ssc |         35 |         35 |       0 |    0 |   25 |      0 |      0 |          0 |
 |   mt                                         |                                       threshold |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
@@ -106,7 +130,7 @@ Table of Contents
 |         gen_cdc_pntr.rd_pntr_cdc_dc_inst     |                    xpm_cdc_gray__parameterized1 |         11 |         11 |       0 |    0 |   32 |      0 |      0 |          0 |
 |         gen_cdc_pntr.rd_pntr_cdc_inst        |                                    xpm_cdc_gray |          9 |          9 |       0 |    0 |   28 |      0 |      0 |          0 |
 |         gen_cdc_pntr.rpw_gray_reg            |                                xpm_fifo_reg_vec |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
-|         gen_cdc_pntr.wpr_gray_reg            |                              xpm_fifo_reg_vec_6 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         gen_cdc_pntr.wpr_gray_reg            |                              xpm_fifo_reg_vec_8 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         gen_cdc_pntr.wr_pntr_cdc_dc_inst     |                    xpm_cdc_gray__parameterized0 |         11 |         11 |       0 |    0 |   48 |      0 |      0 |          0 |
 |         gen_cdc_pntr.wr_pntr_cdc_inst        |                                 xpm_cdc_gray__6 |          9 |          9 |       0 |    0 |   28 |      0 |      0 |          0 |
 |         gen_fwft.rdpp1_inst                  |                                xpm_counter_updn |         10 |         10 |       0 |    0 |    2 |      0 |      0 |          0 |
@@ -114,24 +138,24 @@ Table of Contents
 |         rdp_inst                             |                xpm_counter_updn__parameterized0 |         18 |         18 |       0 |    0 |    8 |      0 |      0 |          0 |
 |         rdpp1_inst                           |                xpm_counter_updn__parameterized1 |          7 |          7 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         rst_d1_inst                          |                                xpm_fifo_reg_bit |          3 |          3 |       0 |    0 |    1 |      0 |      0 |          0 |
-|         wrp_inst                             |              xpm_counter_updn__parameterized0_7 |          8 |          8 |       0 |    0 |    8 |      0 |      0 |          0 |
-|         wrpp1_inst                           |              xpm_counter_updn__parameterized1_8 |         13 |         13 |       0 |    0 |    7 |      0 |      0 |          0 |
+|         wrp_inst                             |              xpm_counter_updn__parameterized0_9 |          8 |          8 |       0 |    0 |    8 |      0 |      0 |          0 |
+|         wrpp1_inst                           |             xpm_counter_updn__parameterized1_10 |         13 |         13 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         wrpp2_inst                           |                xpm_counter_updn__parameterized2 |          6 |          6 |       0 |    0 |    7 |      0 |      0 |          0 |
 |         xpm_fifo_rst_inst                    |                                    xpm_fifo_rst |         18 |         18 |       0 |    0 |   19 |      0 |      0 |          0 |
 |   readwrite_looper                           |                               traffic_generator |        146 |        146 |       0 |    0 |   55 |      0 |      0 |          0 |
 |     (readwrite_looper)                       |                               traffic_generator |         67 |         67 |       0 |    0 |    4 |      0 |      0 |          0 |
 |     read_req_addr_counter                    |                     evt_counter__parameterized3 |         54 |         54 |       0 |    0 |   17 |      0 |      0 |          0 |
-|     read_resp_addr_counter                   |                   evt_counter__parameterized3_4 |         13 |         13 |       0 |    0 |   17 |      0 |      0 |          0 |
-|     write_addr_counter                       |                   evt_counter__parameterized3_5 |         12 |         12 |       0 |    0 |   17 |      0 |      0 |          0 |
-|   red_ser                                    |                               tmds_serializer_1 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     read_resp_addr_counter                   |                   evt_counter__parameterized3_6 |         13 |         13 |       0 |    0 |   17 |      0 |      0 |          0 |
+|     write_addr_counter                       |                   evt_counter__parameterized3_7 |         12 |         12 |       0 |    0 |   17 |      0 |      0 |          0 |
+|   red_ser                                    |                               tmds_serializer_3 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
 |   registers                                  |               xilinx_single_port_ram_read_first |          6 |          6 |       0 |    0 |    0 |      0 |      1 |          0 |
 |   rgbtoycrcb_m                               |                                    rgb_to_ycrcb |        147 |        147 |       0 |    0 |   50 |      0 |      0 |          7 |
 |   stacker_inst                               |                                         stacker |          7 |          7 |       0 |    0 |  253 |      0 |      0 |          0 |
 |   tmds_blue                                  |                                    tmds_encoder |         12 |         12 |       0 |    0 |   14 |      0 |      0 |          0 |
-|   tmds_green                                 |                                  tmds_encoder_2 |          6 |          6 |       0 |    0 |   14 |      0 |      0 |          0 |
-|   tmds_red                                   |                                  tmds_encoder_3 |          6 |          6 |       0 |    0 |   14 |      0 |      0 |          0 |
-|   unstacker_inst                             |                                       unstacker |        151 |        151 |       0 |    0 |  133 |      0 |      0 |          0 |
-|   vsg                                        |                                   video_sig_gen |        179 |        179 |       0 |    0 |   23 |      0 |      0 |          0 |
+|   tmds_green                                 |                                  tmds_encoder_4 |          6 |          6 |       0 |    0 |   14 |      0 |      0 |          0 |
+|   tmds_red                                   |                                  tmds_encoder_5 |          6 |          6 |       0 |    0 |   14 |      0 |      0 |          0 |
+|   unstacker_inst                             |                                       unstacker |        153 |        153 |       0 |    0 |  133 |      0 |      0 |          0 |
+|   vsg                                        |                                   video_sig_gen |        162 |        162 |       0 |    0 |   23 |      0 |      0 |          0 |
 |   wizard_hdmi                                |                                 cw_hdmi_clk_wiz |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 |   wizard_migcam                              |                                 cw_fast_clk_wiz |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
 +----------------------------------------------+-------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
