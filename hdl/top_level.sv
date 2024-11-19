@@ -128,7 +128,7 @@ module top_level (
     logic [15:0] frame_buff_bram; // data out of BRAM frame buffer
     logic [15:0] frame_buff_dram; // data out of DRAM frame buffer
     logic [15:0] frame_buff_raw;  // select between the two!
-    assign frame_buff_raw = sw[0] ? frame_buff_dram : frame_buff_bram;
+    assign frame_buff_raw = btn[3] ? frame_buff_bram : frame_buff_dram;
 
     // Clock domain cross from clk_camera (200 MHz) to clk_pixel (74.25 MHz)
     logic empty;
@@ -449,7 +449,7 @@ module top_level (
     always_ff @(posedge clk_pixel)begin
         fb_red   <= good_addrb ? {frame_buff_raw[15:11],3'b0} : 8'b0;
         fb_green <= good_addrb ? {frame_buff_raw[10:5], 2'b0} : 8'b0;
-        fb_blue  <= good_addrb ? {frame_buff_raw[4:0],3'b0}   : 8'b0;
+        fb_blue  <= good_addrb ? {frame_buff_raw[4:0],  3'b0} : 8'b0;
     end
 
     // RGB to YCrCb
@@ -465,13 +465,12 @@ module top_level (
         .b_in(fb_blue),
         .y_out(y_full),
         .cr_out(cr_full),
-        .cb_out(cb_full)
-    );
+        .cb_out(cb_full));
 
     // Channel select module (select which of six color channels to mask):
     logic [2:0] channel_sel;
     logic [7:0] selected_channel;
-    assign channel_sel = {1'b1, sw[4:3]};
+    assign channel_sel = {1'b1, sw[2:1]};
     channel_select mcs (
         .sel_in(channel_sel),
         .r_in(fb_red),
@@ -494,8 +493,7 @@ module top_level (
         .pixel_in(selected_channel),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
-        .mask_out(mask)
-    );
+        .mask_out(mask));
 
     // Seven-segment module
     logic [6:0] ss_c;
@@ -536,12 +534,6 @@ module top_level (
         end
     end
 
-    // Image sprite output TODO: REMOVE THIS
-    logic [7:0] img_red, img_green, img_blue;
-    assign img_red   = 0;
-    assign img_green = 0;
-    assign img_blue  = 0;
-
     // Crosshair output
     logic [7:0] ch_red, ch_green, ch_blue;
     always_comb begin
@@ -564,10 +556,9 @@ module top_level (
 
     // Video Mux: select from the different display modes based on switch values
     logic [1:0] display_choice;
-    logic [1:0] target_choice;
-
-    assign display_choice = sw[6:5];
-    assign target_choice  = {1'b0,sw[7]};
+    logic target_choice;
+    assign display_choice = sw[4:3];
+    assign target_choice  = sw[5];
     video_mux mvm(
         .bg_in(display_choice),    // choose background
         .target_in(target_choice), // choose target
@@ -576,7 +567,6 @@ module top_level (
         .channel_in(selected_channel), // current channel being drawn
         .thresholded_pixel_in(mask),   // one bit mask signal
         .crosshair_in({ch_red, ch_green, ch_blue}),
-        .com_sprite_pixel_in({img_red, img_green, img_blue}),
         .pixel_out({red, green, blue}) // output to tmds
     );
 

@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Tue Nov 19 15:04:03 2024
-| Host         : eecs-digital-23 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Tue Nov 19 15:52:06 2024
+| Host         : eecs-digital-06 running 64-bit Ubuntu 24.04 LTS
 | Command      : report_utilization -file obj/post_synth_util.rpt -hierarchical -hierarchical_depth 4
 | Design       : top_level
 | Device       : xc7s50csga324-1
@@ -119,7 +119,7 @@ Table of Contents
 |   mssc                                       |                                       lab05_ssc |         35 |         35 |       0 |    0 |   25 |      0 |      0 |          0 |
 |   mt                                         |                                       threshold |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
 |   mvm                                        |                                       video_mux |         37 |         37 |       0 |    0 |    0 |      0 |      0 |          0 |
-|   nolabel_line117                            |                               pixel_reconstruct |         28 |         28 |       0 |    0 |   50 |      0 |      0 |          0 |
+|   nolabel_line116                            |                               pixel_reconstruct |         28 |         28 |       0 |    0 |   50 |      0 |      0 |          0 |
 |   pdfifo                                     |                                   ddr_fifo_wrap |        146 |        146 |       0 |    0 |  234 |      2 |      1 |          0 |
 |     (pdfifo)                                 |                                   ddr_fifo_wrap |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
 |     xpm_fifo_axis_inst                       |                                   xpm_fifo_axis |        144 |        144 |       0 |    0 |  234 |      2 |      1 |          0 |
