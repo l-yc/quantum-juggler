@@ -59,7 +59,7 @@ module top_level (
     logic sys_rst_ui;
     logic clk_100_passthrough;
 
-    // clocking wizards to generate the clock speeds we need for our different domains
+    // Clocking wizards to generate the clock speeds we need for our different domains
     // clk_camera: 200MHz, fast enough to comfortably sample the cameera's PCLK (50MHz)
     cw_hdmi_clk_wiz wizard_hdmi(
         .sysclk(clk_100_passthrough),
@@ -127,8 +127,6 @@ module top_level (
 
     logic [15:0] frame_buff_bram; // data out of BRAM frame buffer
     logic [15:0] frame_buff_dram; // data out of DRAM frame buffer
-    logic [15:0] frame_buff_raw;  // select between the two!
-    assign frame_buff_raw = btn[3] ? frame_buff_bram : frame_buff_dram;
 
     // Clock domain cross from clk_camera (200 MHz) to clk_pixel (74.25 MHz)
     logic empty;
@@ -182,26 +180,6 @@ module top_level (
         end
     endgenerate
 
-    logic [10:0] ds_hcount; // hcount to downsample
-    logic [9:0] ds_vcount;  // vcount to downsample
-    logic [15:0] ds_pixel;  // pixel data to downsample
-    logic ds_valid;         // valid signals to downsample
-
-    // Either go through (btn[2]=0) or bypass (btn[2]==1) Gaussian blur
-    always_comb @(posedge clk_pixel) begin
-        if (btn[2]) begin
-            ds_hcount = cdc_hcount;
-            ds_vcount = cdc_vcount;
-            ds_pixel  = cdc_pixel;
-            ds_valid  = cdc_valid;
-        end else begin
-            ds_hcount = f_hcount[NUM_BLUR-1];
-            ds_vcount = f_vcount[NUM_BLUR-1];
-            ds_pixel  = f_pixel[NUM_BLUR-1];
-            ds_valid  = f_valid[NUM_BLUR-1];
-        end
-    end
-
     //-------------- END GAUSSIAN BLUR --------------//
 
     //-------------- BRAM STUFF HERE --------------//
@@ -216,10 +194,10 @@ module top_level (
 
     // 4X downscale
     always_ff @(posedge clk_pixel) begin
-        valid_camera_mem <= ds_valid;
-        if (ds_hcount[1:0] == 0 && ds_vcount[1:0] == 0) begin
-            addra <= (ds_hcount >> 2) + (ds_vcount >> 2) * 320;
-            camera_mem <= ds_pixel;
+        valid_camera_mem <= f_valid[NUM_BLUR-1];
+        if (f_hcount[NUM_BLUR-1][1:0] == 0 && f_vcount[NUM_BLUR-1][1:0] == 0) begin
+            addra <= (f_hcount[NUM_BLUR-1] >> 2) + (f_vcount[NUM_BLUR-1] >> 2) * 320;
+            camera_mem <= f_pixel[NUM_BLUR-1];
         end
     end
 
@@ -445,11 +423,15 @@ module top_level (
     //-------------- END CAMERA INPUT HANDLING --------------//
 
     // Split frame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
-    logic [7:0] fb_red, fb_green, fb_blue;
-    always_ff @(posedge clk_pixel)begin
-        fb_red   <= good_addrb ? {frame_buff_raw[15:11],3'b0} : 8'b0;
-        fb_green <= good_addrb ? {frame_buff_raw[10:5], 2'b0} : 8'b0;
-        fb_blue  <= good_addrb ? {frame_buff_raw[4:0],  3'b0} : 8'b0;
+    logic [7:0] fb_red_dram, fb_green_dram, fb_blue_dram;
+    logic [7:0] fb_red_bram, fb_green_bram, fb_blue_bram;
+    always_ff @(posedge clk_pixel) begin
+        fb_red_dram   <= good_addrb ? {frame_buff_dram[15:11],3'b0} : 8'b0;
+        fb_green_dram <= good_addrb ? {frame_buff_dram[10:5], 2'b0} : 8'b0;
+        fb_blue_dram  <= good_addrb ? {frame_buff_dram[4:0],  3'b0} : 8'b0;
+        fb_red_bram   <= good_addrb ? {frame_buff_bram[15:11],3'b0} : 8'b0;
+        fb_green_bram <= good_addrb ? {frame_buff_bram[10:5], 2'b0} : 8'b0;
+        fb_blue_bram  <= good_addrb ? {frame_buff_bram[4:0],  3'b0} : 8'b0;
     end
 
     // RGB to YCrCb
@@ -460,9 +442,9 @@ module top_level (
     assign cb = {!cb_full[7],cb_full[6:0]};
     rgb_to_ycrcb rgbtoycrcb_m (
         .clk_in(clk_pixel),
-        .r_in(fb_red),
-        .g_in(fb_green),
-        .b_in(fb_blue),
+        .r_in(fb_red_bram),
+        .g_in(fb_green_bram),
+        .b_in(fb_blue_bram),
         .y_out(y_full),
         .cr_out(cr_full),
         .cb_out(cb_full));
@@ -473,9 +455,9 @@ module top_level (
     assign channel_sel = {1'b1, sw[2:1]};
     channel_select mcs (
         .sel_in(channel_sel),
-        .r_in(fb_red),
-        .g_in(fb_green),
-        .b_in(fb_blue),
+        .r_in(fb_red_bram),
+        .g_in(fb_green_bram),
+        .b_in(fb_blue_bram),
         .y_in(y),
         .cr_in(cr),
         .cb_in(cb),
@@ -554,7 +536,7 @@ module top_level (
         .ad_out(active_draw_hdmi),
         .fc_out(frame_count_hdmi));
 
-    // Video Mux: select from the different display modes based on switch values
+    // Video mux: select from the different display modes based on switch values
     logic [1:0] display_choice;
     logic target_choice;
     assign display_choice = sw[4:3];
@@ -562,7 +544,7 @@ module top_level (
     video_mux mvm(
         .bg_in(display_choice),    // choose background
         .target_in(target_choice), // choose target
-        .camera_pixel_in({fb_red, fb_green, fb_blue}),
+        .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .camera_y_in(y),
         .channel_in(selected_channel), // current channel being drawn
         .thresholded_pixel_in(mask),   // one bit mask signal
