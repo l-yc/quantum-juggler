@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Sun Nov  3 18:24:45 2024
-| Host         : eecs-digital-41 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Tue Nov 19 22:41:09 2024
+| Host         : eecs-digital-18 running 64-bit Ubuntu 24.04.1 LTS
 | Command      : report_timing -file obj/post_synth_timing.rpt
 | Design       : top_level
 | Device       : 7s50-csga324
@@ -43,7 +43,7 @@ Slack (MET) :             0.061ns  (required time - arrival time)
                                                      -6.612    -4.587 r  wizard_migcam/plle2_adv_inst/CLKOUT2
                          net (fo=1, unplaced)         0.800    -3.788    wizard_migcam/clk_camera_cw_fast
                          BUFG (Prop_bufg_I_O)         0.096    -3.692 r  wizard_migcam/clkout3_buf/O
-                         net (fo=225, unplaced)       0.584    -3.108    crw/sccb_c/clk_camera
+                         net (fo=596, unplaced)       0.584    -3.108    crw/sccb_c/clk_camera
                          FDRE                                         r  crw/sccb_c/FSM_onehot_state_reg_reg[1]/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_fdre_C_Q)         0.456    -2.652 r  crw/sccb_c/FSM_onehot_state_reg_reg[1]/Q
@@ -69,7 +69,7 @@ Slack (MET) :             0.061ns  (required time - arrival time)
                                                      -5.893     0.916 r  wizard_migcam/plle2_adv_inst/CLKOUT2
                          net (fo=1, unplaced)         0.760     1.676    wizard_migcam/clk_camera_cw_fast
                          BUFG (Prop_bufg_I_O)         0.091     1.767 r  wizard_migcam/clkout3_buf/O
-                         net (fo=225, unplaced)       0.439     2.206    crw/sccb_c/clk_camera
+                         net (fo=596, unplaced)       0.439     2.206    crw/sccb_c/clk_camera
                          FDRE                                         r  crw/sccb_c/delay_reg_reg[0]/C
                          clock pessimism             -0.459     1.747    
                          clock uncertainty           -0.067     1.681    

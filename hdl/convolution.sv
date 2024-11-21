@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-
 module convolution (
     input wire clk_in,
     input wire rst_in,
@@ -14,12 +13,11 @@ module convolution (
     output logic [9:0] vcount_out,
     output logic [15:0] line_out
     );
-    parameter K_SELECT = 0;
     localparam KERNEL_SIZE = 3;
 
     logic signed [2:0][2:0][7:0] coeffs;
     logic signed [7:0] shift;
-    kernels #(.K_SELECT(K_SELECT)) kernels (
+    kernels kernels (
         .rst_in(rst_in),
         .coeffs(coeffs),
         .shift(shift)
