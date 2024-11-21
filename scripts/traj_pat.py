@@ -3,22 +3,32 @@ import numpy as np
 
 import matplotlib.animation as animation
 
-g = 9.81
-#show_trace = True
+g_raw = 9.81
 show_trace = False
+
+#clk_rate = 100_000000
+clk_rate = 100
+beats = 10
+
+"""
+t is given in number the cycles
+"""
+
+g = g_raw / clk_rate / clk_rate
 
 
 
 #pat = [4, 3, 2]
-#pat = [5, 3, 1]
-pat = [3, 3, 3]
+pat = [5, 3, 1]
+#pat = [3, 3, 3]
 num_balls = len(pat)
 
 s_per_beat = 0.2
+cyc_per_beat = round(s_per_beat * clk_rate) 
 dist = 0.1
 
 throws = [0, 1, 2, 3, 4, 5]
-max_t = [ p * s_per_beat for p in throws ]
+max_t = [ p * cyc_per_beat for p in throws ]
 vx = [ dist / t if t != 0 else 0 for t in max_t ]
 vy  = [ g * t / 2 for t in max_t ]
 
@@ -26,11 +36,7 @@ print(max_t)
 print(vx)
 print(vy)
 
-fig, ax = plt.subplots()
-fps = 60
-
-t_max = num_balls * max(max_t)
-ts = np.linspace(0, t_max, round(t_max * fps) + 1)
+ts = np.arange(0, cyc_per_beat * beats+1)
 
 xs = [ [] for _ in range(num_balls) ]
 ys = [ [] for _ in range(num_balls) ]
@@ -45,11 +51,10 @@ queue = [ -1 for _ in range(max(pat)) ]
 for i in range(num_balls):
     queue[i] = i
 
+counter = 0
+maxi = 0
 for t in ts:
-    frac_beat = t / s_per_beat
-    if abs(frac_beat - round(frac_beat)) < 1e-6:
-        print('hit!', round(frac_beat))
-
+    if counter == 0:
         b = queue[0]
 
         t_start[b] = t
@@ -61,6 +66,7 @@ for t in ts:
 
         queue = queue[1:] + [0]
         queue[throw[b]-1] = b
+    counter = counter+1 if counter+1 < cyc_per_beat else 0 
 
 
     for i in range(num_balls):
@@ -69,11 +75,23 @@ for t in ts:
         dt = t - t_start[i]
         nx = vx[p] * dt if hand[i] == 0 else dist - vx[p] * dt
         ny = vy[p] * dt - 0.5 * g * dt * dt
+        maxi = max(maxi, dt)
+        if counter == 1:
+            print('\t', round(nx,2), round(ny,2))
 
         xs[i].append(nx)
         ys[i].append(ny)
 
 
+
+
+
+
+
+
+# matploblib stuff
+
+fig, ax = plt.subplots()
 scat = [ ax.scatter(xs[i], ys[i], s=30, label=f'ball {i}') for i in range(num_balls) ]
 ax.set(xlim=[0, dist], ylim=[0, np.max(ys) + 0.1], xlabel='x [m]', ylabel='y [m]')
 ax.legend()
@@ -92,17 +110,5 @@ def update(frame):
         scat[i].set_offsets(data)
     return scat[0]
 
-    ## for each frame, update the data stored on each artist.
-    #x = t[:frame]
-    #y = z[:frame]
-    ## update the scatter plot:
-    #data = np.stack([x, y]).T
-    #scat.set_offsets(data)
-    ## update the line plot:
-    #line2.set_xdata(t[:frame])
-    #line2.set_ydata(z2[:frame])
-    #return (scat, line2)
-
-
-ani = animation.FuncAnimation(fig=fig, func=update, frames=len(ts), interval=1/fps)
+ani = animation.FuncAnimation(fig=fig, func=update, frames=len(ts), interval=1000/clk_rate)
 plt.show()
