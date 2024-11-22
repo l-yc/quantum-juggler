@@ -524,6 +524,31 @@ module top_level (
         ch_blue  = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
     end
 
+	// MARK: trajectory module {{{
+	logic [10:0] traj_x_out[6:0];
+	logic [9:0] traj_y_out[6:0];
+	logic traj_valid;
+	trajectory
+		#(
+			.GRAVITY(9.81),
+			.CLK_RATE(100_000000),
+			.DPI(96)
+		) trajectory_gen
+		(
+			.clk_in(clk_100mhz), // TODO what clock rate?
+			.rst_in(rst_in),
+			.pattern({0, 0, 0, 0, 1, 3, 5}),
+			.pattern_valid(1),
+			.num_balls(3),
+			.hand_x_in({1240, 40}),
+			.hand_y_in({719, 719}),
+			.cyc_per_beat(10_000000),
+			.traj_x_out(traj_x_out),
+			.traj_y_out(traj_y_out),
+			.traj_valid(traj_valid)
+		);
+	// }}}
+
     // HDMI video signal generator
     video_sig_gen vsg (
         .pixel_clk_in(clk_pixel),
