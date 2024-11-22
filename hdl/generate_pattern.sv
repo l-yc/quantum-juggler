@@ -37,13 +37,13 @@ module generate_pattern (
     always_comb begin
         if ((state == VALIDATE && pattern_temp_valid) || state == INPUT) begin
             case (segment_state)
-                8'b0000_0001: led_out = (pattern_index >= 0 && pattern_length > 0) ? bto7s_led_out : 7'b0;
-                8'b0000_0010: led_out = (pattern_index >= 1 && pattern_length > 1) ? bto7s_led_out : 7'b0;
-                8'b0000_0100: led_out = (pattern_index >= 2 && pattern_length > 2) ? bto7s_led_out : 7'b0;
-                8'b0000_1000: led_out = (pattern_index >= 3 && pattern_length > 3) ? bto7s_led_out : 7'b0;
-                8'b0001_0000: led_out = (pattern_index >= 4 && pattern_length > 4) ? bto7s_led_out : 7'b0;
-                8'b0010_0000: led_out = (pattern_index >= 5 && pattern_length > 5) ? bto7s_led_out : 7'b0;
-                8'b0100_0000: led_out = (pattern_index >= 6 && pattern_length > 6) ? bto7s_led_out : 7'b0;
+                8'b0000_0010: led_out = (pattern_index >= 6 && pattern_length > 6) ? bto7s_led_out : 7'b0;
+                8'b0000_0100: led_out = (pattern_index >= 5 && pattern_length > 5) ? bto7s_led_out : 7'b0;
+                8'b0000_1000: led_out = (pattern_index >= 4 && pattern_length > 4) ? bto7s_led_out : 7'b0;
+                8'b0001_0000: led_out = (pattern_index >= 3 && pattern_length > 3) ? bto7s_led_out : 7'b0;
+                8'b0010_0000: led_out = (pattern_index >= 2 && pattern_length > 2) ? bto7s_led_out : 7'b0;
+                8'b0100_0000: led_out = (pattern_index >= 1 && pattern_length > 1) ? bto7s_led_out : 7'b0;
+                8'b1000_0000: led_out = (pattern_index >= 0 && pattern_length > 0) ? bto7s_led_out : 7'b0;
                 default:      led_out = 7'b0;
             endcase
         end else begin
@@ -56,13 +56,13 @@ module generate_pattern (
         end
 
         case (segment_state)
-            8'b0000_0001: routed_vals = (pattern_index == 0) ? pattern_in : pattern_temp[0];
-            8'b0000_0010: routed_vals = (pattern_index == 1) ? pattern_in : pattern_temp[1];
-            8'b0000_0100: routed_vals = (pattern_index == 2) ? pattern_in : pattern_temp[2];
-            8'b0000_1000: routed_vals = (pattern_index == 3) ? pattern_in : pattern_temp[3];
-            8'b0001_0000: routed_vals = (pattern_index == 4) ? pattern_in : pattern_temp[4];
-            8'b0010_0000: routed_vals = (pattern_index == 5) ? pattern_in : pattern_temp[5];
-            8'b0100_0000: routed_vals = (pattern_index == 6) ? pattern_in : pattern_temp[6];
+            8'b0000_0010: routed_vals = (pattern_index == 6) ? pattern_in : pattern_temp[6];
+            8'b0000_0100: routed_vals = (pattern_index == 5) ? pattern_in : pattern_temp[5];
+            8'b0000_1000: routed_vals = (pattern_index == 4) ? pattern_in : pattern_temp[4];
+            8'b0001_0000: routed_vals = (pattern_index == 3) ? pattern_in : pattern_temp[3];
+            8'b0010_0000: routed_vals = (pattern_index == 2) ? pattern_in : pattern_temp[2];
+            8'b0100_0000: routed_vals = (pattern_index == 1) ? pattern_in : pattern_temp[1];
+            8'b1000_0000: routed_vals = (pattern_index == 0) ? pattern_in : pattern_temp[0];
             default:      routed_vals = 4'b0;
         endcase
     end

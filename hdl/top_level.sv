@@ -455,7 +455,7 @@ module top_level (
         .pattern_valid_out(pattern_valid),
         .cat_out(ss_c),
         .an_out({ss0_an, ss1_an}));
-    assign rgb0[0] = pattern_valid;
+    assign rgb0[1] = pattern_valid;
     assign ss0_c = ss_c; // control upper four digit's cathodes
     assign ss1_c = ss_c; // same as above but for lower four digits
 
