@@ -1,0 +1,10 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1732232876" />
+    <testcase name="test_1" classname="test_validate_pattern" file="/home/toyat/6205/quantum-juggler/sim/test_validate_pattern.py" lineno="9" time="0.0023713111877441406" sim_time_ns="2.001" ratio_time="843.8369499296199" />
+    <testcase name="test_2" classname="test_validate_pattern" file="/home/toyat/6205/quantum-juggler/sim/test_validate_pattern.py" lineno="18" time="0.0006632804870605469" sim_time_ns="2.001" ratio_time="3016.8232580877066" />
+    <testcase name="test_3" classname="test_validate_pattern" file="/home/toyat/6205/quantum-juggler/sim/test_validate_pattern.py" lineno="27" time="0.0006067752838134766" sim_time_ns="2.0010000000000003" ratio_time="3297.761219646366" />
+    <testcase name="test_4" classname="test_validate_pattern" file="/home/toyat/6205/quantum-juggler/sim/test_validate_pattern.py" lineno="36" time="0.0005898475646972656" sim_time_ns="2.0009999999999994" ratio_time="3392.401901374292" />
+    <testcase name="test_5" classname="test_validate_pattern" file="/home/toyat/6205/quantum-juggler/sim/test_validate_pattern.py" lineno="45" time="0.000545501708984375" sim_time_ns="2.0010000000000012" ratio_time="3668.1828251748275" />
+  </testsuite>
+</testsuites>
