@@ -171,13 +171,13 @@ async def test_a(dut):
 #    Image.fromarray(im_out.astype("uint8"), "RGB").save("../im_out.png")
 
 
-def trajectory_runner():
+def trajectory_generator_runner():
     """Simulate the counter using the Python runner."""
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
     sim = os.getenv("SIM", "icarus")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "trajectory.sv"]
+    sources = [proj_path / "hdl" / "trajectory_generator.sv"]
     sources += [proj_path / "hdl" / "divider.sv"]
     build_test_args = ["-Wall"]
     parameters = { 'CLK_RATE': CLK_RATE }
@@ -185,7 +185,7 @@ def trajectory_runner():
     runner = get_runner(sim)
     runner.build(
         sources=sources,
-        hdl_toplevel="trajectory",
+        hdl_toplevel="trajectory_generator",
         always=True,
         build_args=build_test_args,
         parameters=parameters,
@@ -194,11 +194,11 @@ def trajectory_runner():
     )
     run_test_args = []
     runner.test(
-        hdl_toplevel="trajectory",
-        test_module="test_trajectory",
+        hdl_toplevel="trajectory_generator",
+        test_module="test_trajectory_generator",
         test_args=run_test_args,
         waves=True
     )
 
 if __name__ == "__main__":
-    trajectory_runner()
+    trajectory_generator_runner()

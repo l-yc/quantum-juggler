@@ -524,30 +524,53 @@ module top_level (
         ch_blue  = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
     end
 
-	// MARK: trajectory module {{{
+	// MARK: trajectory modules {{{
 	logic [10:0] traj_x_out[6:0];
 	logic [9:0] traj_y_out[6:0];
 	logic traj_valid;
-	trajectory
-		#(
-			.GRAVITY(9.81),
-			.CLK_RATE(100_000000),
-			.DPI(96)
-		) trajectory_gen
-		(
-			.clk_in(clk_100mhz), // TODO what clock rate?
-			.rst_in(rst_in),
-			.pattern({0, 0, 0, 0, 1, 3, 5}),
-			.pattern_valid(1),
-			.num_balls(3),
-			.hand_x_in({1240, 40}),
-			.hand_y_in({719, 719}),
-			.cyc_per_beat(10_000000),
-			.traj_x_out(traj_x_out),
-			.traj_y_out(traj_y_out),
-			.traj_valid(traj_valid)
-		);
-	// }}}
+    trajectory_generator
+        #(
+            .GRAVITY(9.81),
+            .CLK_RATE(100_000000),
+            .DPI(96)
+        ) traj_gen
+        (
+            .clk_in(clk_pixel), // TODO what clock rate?
+            .rst_in(sys_rst_pixel),
+            .pattern({0, 0, 0, 0, 1, 3, 5}),
+            .pattern_valid(1),
+            .num_balls(3), // TODO replace with num balls
+            .hand_x_in({1240, 40}), // TODO replace with hands
+            .hand_y_in({719, 719}), // TODO replace with hands
+            .cyc_per_beat(10_000000),
+            .traj_x_out(traj_x_out),
+            .traj_y_out(traj_y_out),
+            .traj_valid(traj_valid)
+        );	
+	
+	logic [7:0] trajectory_red;
+	logic [7:0] trajectory_green;
+	logic [7:0] trajectory_blue;
+
+    draw_trajectory draw_traj
+        (
+            .clk_in(clk_pixel), // TODO what clock rate?
+            .rst_in(sys_rst_pixel),
+
+            .num_balls(3), // TODO replace with num balls
+            .traj_x_in(traj_x_out),
+            .traj_y_in(traj_y_out),
+            .traj_valid(traj_valid),
+            .hand_x_in({1240, 40}), // TODO replace with hands
+            .hand_y_in({719, 719}), // TODO replace with hands
+
+            .hcount_in(hcount_hdmi),
+            .vcount_in(vcount_hdmi),
+            .red_out(trajectory_red),
+            .green_out(trajectory_green),
+            .blue_out(trajectory_blue)
+        );
+    // }}}
 
     // HDMI video signal generator
     video_sig_gen vsg (
@@ -573,6 +596,7 @@ module top_level (
         .camera_y_in(y),
         .channel_in(selected_channel), // current channel being drawn
         .thresholded_pixel_in(mask),   // one bit mask signal
+		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in({ch_red, ch_green, ch_blue}),
         .pixel_out({red, green, blue}) // output to tmds
     );

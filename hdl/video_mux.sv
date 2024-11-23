@@ -8,6 +8,7 @@ module video_mux (
     input wire [7:0] camera_y_in,      // y channel of ycrcb camera conversion
     input wire [7:0] channel_in,       // the channel from selection module
     input wire thresholded_pixel_in,
+    input wire [23:0] trajectory_pixel_in,
     input wire crosshair_in,
     output logic [23:0] pixel_out
 );
@@ -26,7 +27,8 @@ module video_mux (
     always_comb begin
         case (target_in)
             1'b00:   l_2 = l_1;
-            default: l_2 = crosshair_in ? 24'h00FF00 : l_1;
+            //default: l_2 = crosshair_in ? 24'h00FF00 : l_1;
+            default: l_2 = (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
         endcase
     end
 

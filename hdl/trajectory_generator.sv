@@ -1,5 +1,5 @@
 `default_nettype none
-module trajectory
+module trajectory_generator
 	#(
 		parameter GRAVITY = 9.81,
 		parameter CLK_RATE = 100_000000,
@@ -20,7 +20,8 @@ module trajectory
 	);
 
 	// Units: pixels / cyc^2
-	localparam g = GRAVITY / 0.0254 * DPI / CLK_RATE / CLK_RATE;
+	//localparam g = GRAVITY / 0.0254 * DPI / CLK_RATE / CLK_RATE;
+	localparam g = 10;
 
 	// MARK: calculate look up tables
 	logic [31:0] distance;
@@ -52,7 +53,8 @@ module trajectory
 				.data_valid_out(vx_ready[p]),
 				.error_out(),
 				.busy_out());
-			assign vy[p] = $rtoi(g * p * cyc_per_beat) >> 1;
+			//assign vy[p] = $rtoi(g * p * cyc_per_beat) >> 1;
+			assign vy[p] = (g * p * cyc_per_beat) >> 1;
 		end
 	endgenerate
 
@@ -173,7 +175,8 @@ module trajectory
 						//traj_x_out[i] <= (t - t_start[i]);
 						//traj_x_out[i] <= vx[throw[i]];
 						traj_x_out[i] <= hand[i] == 0 ? vx[throw[i]] * (t - t_start[i]) : distance - vx[throw[i]] * (t - t_start[i]);
-						traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+						//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+						traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
 					end
 				end
 			end
