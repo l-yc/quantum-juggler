@@ -14,27 +14,38 @@ module generate_pattern (
     output logic [7:0] an_out
     );
 
+    // Sum up the values in the output pattern
     logic [5:0] sum_pattern;
+    assign sum_pattern = pattern_out[0] + pattern_out[1] + pattern_out[2] + pattern_out[3] + 
+                         pattern_out[4] + pattern_out[5] + pattern_out[6];
 
+    // Create pulse for valid pattern
+    // 6-stage pipeline for pattern_valid_out to account for division
+    logic pattern_valid_pipe [5:0];
+    logic pattern_valid_prev;
     logic pattern_valid_pulse;
-    logic divide_valid_pulse;
-    logic [5:0] num_balls_pulse;
+    assign pattern_valid_out = pattern_valid_pipe[5];
+    always_ff @(posedge clk_in) begin
+        pattern_valid_pulse <= !pattern_valid_prev && pattern_valid_pipe[0];
+        pattern_valid_prev <= pattern_valid_pipe[0];
+        for (int i=1; i<6; i=i+1) begin
+            pattern_valid_pipe[i] <= pattern_valid_pipe[i-1];
+        end
+    end
+
+    logic [5:0] num_balls_full;
+    assign num_balls_out = num_balls_full[2:0];
     divider #(.WIDTH(6)) ball_calc (
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .dividend_in(sum_pattern), // TODO: SUM UP THE PATTERN
+        .dividend_in(sum_pattern),
         .divisor_in({3'b0, pattern_length}),
         .data_valid_in(pattern_valid_pulse),
-        .quotient_out(num_balls_pulse),
+        .quotient_out(num_balls_full),
         .remainder_out(),
-        .data_valid_out(divide_valid_pulse),
+        .data_valid_out(),
         .error_out(),
         .busy_out());
-    always_ff @(posedge clk_in) begin
-        if (rst_in) begin
-
-        end else if (divide_valid_pulse)
-    end
 
     logic [7:0]  segment_state;
     logic [31:0] segment_counter;
@@ -56,9 +67,28 @@ module generate_pattern (
     assign cat_out = ~led_out;
     assign an_out = ~segment_state;
 
+    // For debugging in gtkwave
+    logic [2:0] pattern_out_1, pattern_out_2, pattern_out_3, pattern_out_4, pattern_out_5, pattern_out_6, pattern_out_7;
+    assign pattern_out_1 = pattern_out[0];
+    assign pattern_out_2 = pattern_out[1];
+    assign pattern_out_3 = pattern_out[2];
+    assign pattern_out_4 = pattern_out[3];
+    assign pattern_out_5 = pattern_out[4];
+    assign pattern_out_6 = pattern_out[5];
+    assign pattern_out_7 = pattern_out[6];
+    logic [2:0] pattern_temp_1, pattern_temp_2, pattern_temp_3, pattern_temp_4, pattern_temp_5, pattern_temp_6, pattern_temp_7;
+    assign pattern_temp_1 = pattern_temp[0];
+    assign pattern_temp_2 = pattern_temp[1];
+    assign pattern_temp_3 = pattern_temp[2];
+    assign pattern_temp_4 = pattern_temp[3];
+    assign pattern_temp_5 = pattern_temp[4];
+    assign pattern_temp_6 = pattern_temp[5];
+    assign pattern_temp_7 = pattern_temp[6];
+
     always_comb begin
         if ((state == VALIDATE && pattern_temp_valid) || state == INPUT) begin
             case (segment_state)
+                8'b0000_0001: led_out = pattern_valid_out ? bto7s_led_out : 7'b0;
                 8'b0000_0010: led_out = (pattern_index >= 6 && pattern_length > 6) ? bto7s_led_out : 7'b0;
                 8'b0000_0100: led_out = (pattern_index >= 5 && pattern_length > 5) ? bto7s_led_out : 7'b0;
                 8'b0000_1000: led_out = (pattern_index >= 4 && pattern_length > 4) ? bto7s_led_out : 7'b0;
@@ -78,6 +108,7 @@ module generate_pattern (
         end
 
         case (segment_state)
+            8'b0000_0001: routed_vals = num_balls_out;
             8'b0000_0010: routed_vals = (pattern_index == 6) ? pattern_in : pattern_temp[6];
             8'b0000_0100: routed_vals = (pattern_index == 5) ? pattern_in : pattern_temp[5];
             8'b0000_1000: routed_vals = (pattern_index == 4) ? pattern_in : pattern_temp[4];
@@ -94,8 +125,11 @@ module generate_pattern (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             pattern_index <= 0;
-            for (int i = 0; i < 7; i = i + 1) begin
+            for (int i=0; i<7; i=i+1) begin
                 pattern_temp[i] <= 0;
+            end
+            for (int i=0; i<6; i=i+1) begin
+                pattern_valid_pipe[i] <= 0;
             end
             segment_state <= 8'b0000_0001;
             segment_counter <= 0;
@@ -112,16 +146,17 @@ module generate_pattern (
                     for (int i = 0; i < 7; i = i + 1) begin
                         pattern_temp[i] <= 0;
                     end
+                    pattern_valid_pipe[0] <= 0;
                     pattern_index <= 0;
                 end else begin
                     pattern_temp[pattern_index] <= pattern_in;
                     pattern_index <= pattern_index + 1;
                 end
-            end
-
-            if (state == VALIDATE) begin
-                pattern_out <= pattern_temp;
-                pattern_valid_out <= pattern_temp_valid;
+            end else if (state == VALIDATE) begin
+                for (int i=0; i<7; i=i+1) begin
+                    pattern_out[i] <= pattern_temp[i];
+                end
+                pattern_valid_pipe[0] <= pattern_temp_valid;
             end
         end
     end

@@ -13,8 +13,8 @@ module divider #(parameter WIDTH = 32) (input wire clk_in,
                 output logic busy_out);
   logic [WIDTH-1:0] quotient, dividend;
   logic [WIDTH-1:0] divisor;
-  logic [5:0] count;
-  logic [31:0] p;
+  logic [$clog2(WIDTH):0] count;
+  logic [WIDTH-1:0] p;
   enum {RESTING, DIVIDING} state;
   always_ff @(posedge clk_in)begin
     if (rst_in)begin
@@ -37,7 +37,7 @@ module divider #(parameter WIDTH = 32) (input wire clk_in,
             divisor <= divisor_in;
             busy_out <= 1'b1;
             error_out <= 1'b0;
-            count <= 31;//load all up
+            count <= WIDTH-1;//load all up
             p <= 0;
           end
           data_valid_out <= 1'b0;
@@ -45,23 +45,23 @@ module divider #(parameter WIDTH = 32) (input wire clk_in,
         DIVIDING: begin
           if (count==1)begin
             state <= RESTING;
-            if ({p_temp[30:0],div_temp[31]}>=divisor[31:0])begin
-              remainder_out <= {p_temp[30:0],div_temp[31]} - divisor[31:0];
-              quotient_out <= {div_temp[30:0],1'b1};
+            if ({p_temp[WIDTH-2:0],div_temp[WIDTH-1]}>=divisor[WIDTH-1:0])begin
+              remainder_out <= {p_temp[WIDTH-2:0],div_temp[WIDTH-1]} - divisor[WIDTH-1:0];
+              quotient_out <= {div_temp[WIDTH-2:0],1'b1};
             end else begin
-              remainder_out <= {p_temp[30:0],div_temp[31]};
-              quotient_out <= {div_temp[30:0],1'b0};
+              remainder_out <= {p_temp[WIDTH-2:0],div_temp[WIDTH-1]};
+              quotient_out <= {div_temp[WIDTH-2:0],1'b0};
             end
             busy_out <= 1'b0; //tell outside world i'm done
             error_out <= 1'b0;
             data_valid_out <= 1'b1; //good stuff!
           end else begin
-            if ({p_temp[30:0],div_temp[31]}>=divisor[31:0])begin
-              p <= {p_temp[30:0],div_temp[31]} - divisor[31:0];
-              dividend <= {div_temp[30:0],1'b1};
+            if ({p_temp[WIDTH-2:0],div_temp[WIDTH-1]}>=divisor[WIDTH-1:0])begin
+              p <= {p_temp[WIDTH-2:0],div_temp[WIDTH-1]} - divisor[WIDTH-1:0];
+              dividend <= {div_temp[WIDTH-2:0],1'b1};
             end else begin
-              p <= {p_temp[30:0],div_temp[31]};
-              dividend <= {div_temp[30:0],1'b0};
+              p <= {p_temp[WIDTH-2:0],div_temp[WIDTH-1]};
+              dividend <= {div_temp[WIDTH-2:0],1'b0};
             end
             count <= count-2;
           end
@@ -70,15 +70,15 @@ module divider #(parameter WIDTH = 32) (input wire clk_in,
     end
   end
   //extra:
-  logic [31:0] p_temp;
-  logic [31:0] div_temp;
+  logic [WIDTH-1:0] p_temp;
+  logic [WIDTH-1:0] div_temp;
   always_comb begin
-    if ({p[30:0],dividend[31]}>=divisor[31:0])begin
-      p_temp = {p[30:0],dividend[31]} - divisor[31:0];
-      div_temp = {dividend[30:0],1'b1};
+    if ({p[WIDTH-2:0],dividend[WIDTH-1]}>=divisor[WIDTH-1:0])begin
+      p_temp = {p[WIDTH-2:0],dividend[WIDTH-1]} - divisor[WIDTH-1:0];
+      div_temp = {dividend[WIDTH-2:0],1'b1};
     end else begin
-      p_temp = {p[30:0],dividend[31]};
-      div_temp = {dividend[30:0],1'b0};
+      p_temp = {p[WIDTH-2:0],dividend[WIDTH-1]};
+      div_temp = {dividend[WIDTH-2:0],1'b0};
     end
   end
 endmodule
