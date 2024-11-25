@@ -8,7 +8,7 @@ module generate_pattern (
     input wire [2:0] pattern_in,
     input wire [2:0] pattern_length,
     output logic [2:0] num_balls_out,
-    output logic [6:0][2:0] pattern_out,
+    output logic [2:0] pattern_out [6:0],
     output logic pattern_valid_out,
     output logic [6:0] cat_out,
     output logic [7:0] an_out
@@ -21,7 +21,7 @@ module generate_pattern (
     logic [6:0]  bto7s_led_out;
 
     logic [2:0] pattern_index;
-    logic [6:0][2:0] pattern_temp;
+    logic [2:0] pattern_temp [6:0];
     logic pattern_temp_valid;
     validate_pattern validate_pattern_inst (
         .pattern_in(pattern_temp),
@@ -72,7 +72,9 @@ module generate_pattern (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             pattern_index <= 0;
-            pattern_temp <= 0;
+            for (int i = 0; i < 7; i = i + 1) begin
+                pattern_temp[i] <= 0;
+            end
             segment_state <= 8'b0000_0001;
             segment_counter <= 0;
         end else begin
@@ -85,7 +87,9 @@ module generate_pattern (
 
             if (new_beat) begin
                 if (state == VALIDATE) begin
-                    pattern_temp <= 0;
+                    for (int i = 0; i < 7; i = i + 1) begin
+                        pattern_temp[i] <= 0;
+                    end
                     pattern_index <= 0;
                 end else begin
                     pattern_temp[pattern_index] <= pattern_in;

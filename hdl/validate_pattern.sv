@@ -2,7 +2,7 @@
 `default_nettype none
 
 module validate_pattern (
-    input wire [6:0][2:0] pattern_in,
+    input wire [2:0] pattern_in [6:0],
     input wire [2:0] pattern_length,
     output logic pattern_valid_out
     );
