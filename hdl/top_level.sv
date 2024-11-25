@@ -489,11 +489,9 @@ module top_level (
         .cb_out(cb_full));
 
     // Channel select module (select which of six color channels to mask):
-    logic [2:0] channel_sel;
-    assign channel_sel = 3'b101; // TODO: currently hard-coded, update later
     logic [7:0] selected_channel;
     channel_select mcs (
-        .sel_in(channel_sel),
+        .sel_in(3'b100), // select y value
         .r_in(fb_red_bram),
         .g_in(fb_green_bram),
         .b_in(fb_blue_bram),
@@ -507,7 +505,7 @@ module top_level (
     logic [7:0] upper_threshold;
     logic mask;
     assign lower_threshold = {sw[9:6], 4'b0};
-    assign upper_threshold = {sw[13:10], 4'b0};
+    assign upper_threshold = {sw[13:10], 4'b1111};
     always_ff @(posedge clk_pixel) begin
         mask <= (selected_channel > lower_threshold) && (selected_channel <= upper_threshold);
     end
@@ -559,7 +557,7 @@ module top_level (
         .bg_in(sw[14]),
         .target_in(sw[15]),
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
-        .camera_y_in(y),
+        .sel_channel_in(selected_channel),
         .thresholded_pixel_in(mask),
         .crosshair_in(is_crosshair),
         .pixel_out({red, green, blue}));
