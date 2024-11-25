@@ -42,8 +42,7 @@ module top_level (
     output wire         ddr3_odt
     );
 
-    // Shut up those RGBs
-    assign rgb0 = 0;
+    // Shut up rgb1
     assign rgb1 = 0;
 
     // Clock and Reset Signals
@@ -113,7 +112,7 @@ module top_level (
     logic [15:0] camera_pixel;
     logic        camera_valid;
 
-    pixel_reconstruct(
+    pixel_reconstruct pixel_reconstruct_inst (
         .clk_in(clk_camera),
         .rst_in(sys_rst_camera),
         .camera_pclk_in(cam_pclk_buf[0]),
@@ -422,6 +421,46 @@ module top_level (
 
     //-------------- END CAMERA INPUT HANDLING --------------//
 
+    //-------------- PATTERN GENERATION --------------//
+
+    // Debouncer to clean up signal
+    logic btn1_clean;
+    debouncer btn1_db (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .dirty_in(btn[1]),
+        .clean_out(btn1_clean));
+
+    // Pulse generator for sending new beat
+    logic btn1_pulse;
+    logic prev_btn1_clean;
+    always_ff @(posedge clk_pixel) begin
+        btn1_pulse <= !prev_btn1_clean && btn1_clean;
+        prev_btn1_clean <= btn1_clean;
+    end
+
+    // Pattern generation and seven segment display
+    logic [6:0][2:0] siteswap_pattern; // Most significant 3 bits at index 0
+    logic pattern_valid;
+    logic [2:0] num_balls;
+    logic [6:0] ss_c;
+    generate_pattern generate_pattern_inst (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .new_beat(btn1_pulse),
+        .pattern_in(sw[2:0]),
+        .pattern_length(sw[5:3]),
+        .num_balls_out(num_balls),
+        .pattern_out(siteswap_pattern),
+        .pattern_valid_out(pattern_valid),
+        .cat_out(ss_c),
+        .an_out({ss0_an, ss1_an}));
+    assign rgb0[1] = pattern_valid;
+    assign ss0_c = ss_c; // control upper four digit's cathodes
+    assign ss1_c = ss_c; // same as above but for lower four digits
+
+    //-------------- END PATTERN GENERATION --------------//
+
     // Split frame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
     logic [7:0] fb_red_dram, fb_green_dram, fb_blue_dram;
     logic [7:0] fb_red_bram, fb_green_bram, fb_blue_bram;
@@ -451,8 +490,8 @@ module top_level (
 
     // Channel select module (select which of six color channels to mask):
     logic [2:0] channel_sel;
+    assign channel_sel = 3'b101; // TODO: currently hard-coded, update later
     logic [7:0] selected_channel;
-    assign channel_sel = {1'b1, sw[2:1]};
     channel_select mcs (
         .sel_in(channel_sel),
         .r_in(fb_red_bram),
@@ -467,28 +506,11 @@ module top_level (
     logic [7:0] lower_threshold;
     logic [7:0] upper_threshold;
     logic mask;
-    assign lower_threshold = {sw[11:8],4'b0};
-    assign upper_threshold = {sw[15:12],4'b0};
-    threshold mt (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .pixel_in(selected_channel),
-        .lower_bound_in(lower_threshold),
-        .upper_bound_in(upper_threshold),
-        .mask_out(mask));
-
-    // Seven-segment module
-    logic [6:0] ss_c;
-    lab05_ssc mssc (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .lt_in(lower_threshold),
-        .ut_in(upper_threshold),
-        .channel_sel_in(channel_sel),
-        .cat_out(ss_c),
-        .an_out({ss0_an, ss1_an}));
-    assign ss0_c = ss_c; // control upper four digit's cathodes
-    assign ss1_c = ss_c; // same as above but for lower four digits
+    assign lower_threshold = {sw[9:6], 4'b0};
+    assign upper_threshold = {sw[13:10], 4'b0};
+    always_ff @(posedge clk_pixel) begin
+        mask <= (selected_channel > lower_threshold) && (selected_channel <= upper_threshold);
+    end
 
     // Center of mass (tally all mask=1 pixels for a frame and calculate their center of mass)
     logic [10:0] x_com, x_com_calc; // long term x_com and output from module, resp
@@ -517,12 +539,8 @@ module top_level (
     end
 
     // Crosshair output
-    logic [7:0] ch_red, ch_green, ch_blue;
-    always_comb begin
-        ch_red   = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
-        ch_green = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
-        ch_blue  = ((vcount_hdmi==y_com) || (hcount_hdmi==x_com)) ? 8'hFF : 8'h00;
-    end
+    logic is_crosshair;
+    assign is_crosshair = (vcount_hdmi == y_com) || (hcount_hdmi == x_com);
 
 	// MARK: trajectory modules {{{
 	logic [10:0] traj_x_out[6:0];
@@ -584,22 +602,16 @@ module top_level (
         .ad_out(active_draw_hdmi),
         .fc_out(frame_count_hdmi));
 
-    // Video mux: select from the different display modes based on switch values
-    logic [1:0] display_choice;
-    logic target_choice;
-    assign display_choice = sw[4:3];
-    assign target_choice  = sw[5];
+    // Video mux: select from the different display modes and output to TMDS
     video_mux mvm(
-        .bg_in(display_choice),    // choose background
-        .target_in(target_choice), // choose target
+        .bg_in(sw[14]),
+        .target_in(sw[15]),
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .camera_y_in(y),
-        .channel_in(selected_channel), // current channel being drawn
-        .thresholded_pixel_in(mask),   // one bit mask signal
+        .thresholded_pixel_in(mask),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-        .crosshair_in({ch_red, ch_green, ch_blue}),
-        .pixel_out({red, green, blue}) // output to tmds
-    );
+        .crosshair_in(is_crosshair),
+        .pixel_out({red, green, blue}));
 
     //-------------- HDMI OUTPUT --------------//
 
