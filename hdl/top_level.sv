@@ -547,18 +547,19 @@ module top_level (
     trajectory_generator
         #(
             .GRAVITY(9.81),
-            .CLK_RATE(100_000000),
+            .CLK_RATE(74_250000),
             .DPI(96)
         ) traj_gen
         (
-            .clk_in(clk_pixel), // TODO what clock rate?
+            .clk_in(clk_pixel),
             .rst_in(sys_rst_pixel),
-            .pattern({0, 0, 0, 0, 1, 3, 5}),
-            .pattern_valid(1),
+			.nf_in(nf_hdmi),
+            .pattern(siteswap_pattern),
+            .pattern_valid(pattern_valid),
             .num_balls(3), // TODO replace with num balls
-            .hand_x_in({1240, 40}), // TODO replace with hands
+            .hand_x_in({700, 500}), // TODO replace with hands
             .hand_y_in({719, 719}), // TODO replace with hands
-            .cyc_per_beat(10_000000),
+            .frame_per_beat(5),
             .traj_x_out(traj_x_out),
             .traj_y_out(traj_y_out),
             .traj_valid(traj_valid)
@@ -570,13 +571,14 @@ module top_level (
 
     draw_trajectory draw_traj
         (
-            .clk_in(clk_pixel), // TODO what clock rate?
+            .clk_in(clk_pixel),
             .rst_in(sys_rst_pixel),
 
             .num_balls(3), // TODO replace with num balls
             .traj_x_in(traj_x_out),
             .traj_y_in(traj_y_out),
-            .traj_valid(traj_valid),
+            //.traj_valid(traj_valid),
+            .traj_valid(1),
             .hand_x_in({1240, 40}), // TODO replace with hands
             .hand_y_in({719, 719}), // TODO replace with hands
 

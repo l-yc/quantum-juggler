@@ -2,26 +2,35 @@
 module trajectory_generator
 	#(
 		parameter GRAVITY = 9.81,
-		parameter CLK_RATE = 100_000000,
+		parameter CLK_RATE = 74_250000,
 		parameter DPI = 96
 	)
 	(
 		input wire clk_in, // TODO what clock rate?
 		input wire rst_in,
+		input wire nf_in,
 		input wire [2:0] pattern[6:0],
 		input wire pattern_valid,
 		input wire [2:0] num_balls,
 		input wire [10:0] hand_x_in[1:0],
 		input wire [9:0] hand_y_in[1:0],
-		input wire [31:0] cyc_per_beat,
+		input wire [14:0] frame_per_beat,
 		output logic [10:0] traj_x_out[6:0],
 		output logic [9:0] traj_y_out[6:0],
 		output logic traj_valid
 	);
 
-	// Units: pixels / cyc^2
+	//always_comb begin
+	//	for (integer i = 0; i < 7; i += 1) begin
+	//		traj_x_out[i] = i * 50 + 50;
+	//		traj_y_out[i] = i * 50 + 50;
+	//	end
+	//	traj_valid = 1;
+	//end
+
+	// Units: pixels / frame^2
 	//localparam g = GRAVITY / 0.0254 * DPI / CLK_RATE / CLK_RATE;
-	localparam g = 10;
+	localparam g = 4;
 
 	// MARK: calculate look up tables
 	logic [31:0] distance;
@@ -40,21 +49,21 @@ module trajectory_generator
 		assign vx_ready[0] = 1;
 		assign vy[0] = 0;
 		for (p = 1; p < 8; p += 1) begin
-			assign max_t[p] = p * cyc_per_beat;
-			//assign vx[p] = distance / (p * cyc_per_beat);
+			assign max_t[p] = p * frame_per_beat;
+			//assign vx[p] = distance / (p * frame_per_beat);
 			divider vx_divider(
 				.clk_in(clk_in),
 				.rst_in(rst_in),
 				.dividend_in(distance),
-				.divisor_in(p * cyc_per_beat),
+				.divisor_in(p * frame_per_beat),
 				.data_valid_in(pattern_valid),
 				.quotient_out(vx[p]),
 				.remainder_out(),
 				.data_valid_out(vx_ready[p]),
 				.error_out(),
 				.busy_out());
-			//assign vy[p] = $rtoi(g * p * cyc_per_beat) >> 1;
-			assign vy[p] = (g * p * cyc_per_beat) >> 1;
+			//assign vy[p] = $rtoi(g * p * frame_per_beat) >> 1;
+			assign vy[p] = (g * p * frame_per_beat) >> 1;
 		end
 	endgenerate
 
@@ -79,23 +88,34 @@ module trajectory_generator
     end
 
 	// inputs
+	evt_counter #(
+		.MAX_COUNT(4096),
+		.RST_VAL(0)
+	) t_counter (
+		.clk_in(clk_in),
+		.rst_in(rst_in),
+		.evt_in(nf_in),
+		.count_out(t)
+	);
+
 	logic [2:0] _pattern[6:0];
 	logic [2:0] _num_balls;
 	logic [10:0] _hand_x_in[1:0];
 	logic [9:0] _hand_y_in[1:0];
-	logic [14:0] _cyc_per_beat;
+	logic [14:0] _frame_per_beat;
 
 
 	// FIXME think through how many bits we actually need... 
+	//logic [11:0] t_start[6:0];
 	logic [31:0] t_start[6:0];
 	logic [31:0] hand[6:0];
 	logic [31:0] throw[6:0];
+	//logic [11:0] t;
 	logic [31:0] t;
 	logic [31:0] hidx;
 	logic [31:0] pidx;
 	logic [31:0] queue[6:0];
 	logic [31:0] counter;
-	logic [31:0] maxi;
     always_ff @(posedge clk_in) begin
 		case (state)
 			IDLE: begin
@@ -117,7 +137,7 @@ module trajectory_generator
 						_hand_x_in[i] <= hand_x_in[i];
 						_hand_y_in[i] <= hand_y_in[i];
 					end
-					_cyc_per_beat <= cyc_per_beat;
+					_frame_per_beat <= frame_per_beat;
 
 					// logic
 					for (integer i = 0; i < 7; i += 1) begin
@@ -133,50 +153,50 @@ module trajectory_generator
 						if (i < num_balls) begin
 							queue[i] <= i;
 						end else begin
-							queue[i] <= 0;
+							queue[i] <= num_balls;
 						end
 					end
+
 					counter <= 0;
-					maxi <= 0;
-					t <= 0;
 				end
 			end
 			TRANSMIT: begin
-				if (counter == 0) begin
-					t_start[queue[0]] <= t;
-					hand[queue[0]] <= hidx;
-					hidx <= hidx == 1 ? 0 : 1;
-					throw[queue[0]] = _pattern[pidx];
-					pidx <= pidx == _num_balls-1 ? 0 : pidx + 1;
+				if (nf_in == 1) begin
+					if (counter == 0) begin
+						t_start[queue[0]] <= t+1;
+						hand[queue[0]] <= hidx;
+						hidx <= hidx == 1 ? 0 : 1;
+						throw[queue[0]] <= _pattern[pidx];
+						pidx <= pidx == _num_balls-1 ? 0 : pidx + 1;
 
-					// queue <= [0] + queue[6:1]
-					// queue[throw[queue[0]]-1] = queue[0];
-					for (integer i = 0; i < 7; i += 1) begin
-						if (i == throw[queue[0]]-1) begin
-							queue[i] <= queue[0];
-						end else if (i == 6) begin
-							queue[i] <= 0;
-						end else begin
-							queue[i] <= queue[i+1];
+						// queue <= [0] + queue[6:1]
+						// queue[throw[queue[0]]-1] = queue[0];
+						for (integer i = 0; i < 7; i += 1) begin
+							if (queue[0] < _num_balls && i == _pattern[pidx]-1) begin
+								queue[i] <= queue[0];
+							end else if (i == 6) begin
+								queue[i] <= _num_balls;
+							end else begin
+								queue[i] <= queue[i+1];
+							end
 						end
 					end
-				end
+					counter <= counter+1 == _frame_per_beat ? 0 : counter+1;
 
-				counter <= counter+1 == _cyc_per_beat ? 0 : counter + 1;
-				t <= t + 1;
 
-				traj_valid <= 1;
-				for (integer i = 0; i < 7; i += 1) begin
-					if (i < _num_balls && t_start[i] <= t) begin
-						// p = thrw[i]
-						// dt = t - t_start[i]
-						//traj_x_out[i] <= hand[0] == 0 ? 0 : distance;
-						//traj_x_out[i] <= throw[i];
-						//traj_x_out[i] <= (t - t_start[i]);
-						//traj_x_out[i] <= vx[throw[i]];
-						traj_x_out[i] <= hand[i] == 0 ? vx[throw[i]] * (t - t_start[i]) : distance - vx[throw[i]] * (t - t_start[i]);
-						//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
-						traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+					traj_valid <= 1;
+					for (integer i = 0; i < 7; i += 1) begin
+						if (i < _num_balls && t_start[i] <= t) begin
+							// p = thrw[i]
+							// dt = t - t_start[i]
+							//traj_x_out[i] <= hand[0] == 0 ? 0 : distance;
+							//traj_x_out[i] <= throw[i];
+							//traj_x_out[i] <= (t - t_start[i]);
+							//traj_x_out[i] <= vx[throw[i]];
+							traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - vx[throw[i]] * (t - t_start[i]);
+							//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+							traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+						end
 					end
 				end
 			end
@@ -187,6 +207,37 @@ module trajectory_generator
 
 
 	// debug
+	logic [31:0] debug0;
+	logic [10:0] debug1;
+	logic [31:0] debug2;
+	logic [31:0] debug3;
+	logic [31:0] debug4;
+	logic [31:0] debug5;
+	logic [31:0] debug6;
+	assign debug0 = hand[0]; // 32 bits
+	assign debug1 = _hand_x_in[0]; // 11 bits
+	assign debug2 = _hand_x_in[1]; // 11 bits
+	assign debug3 = vx[throw[0]]; // 32 bits
+	assign debug4 = t - t_start[0]; // 32 bits
+	assign debug5 = _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]);
+	assign debug6 = hand[0] == 0 ? _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]) : _hand_x_in[1] - vx[throw[0]] * (t - t_start[0]);
+
+
+	logic [31:0] t_start0;
+	logic [31:0] t_start1;
+	logic [31:0] t_start2;
+	logic [31:0] t_start3;
+	logic [31:0] t_start4;
+	logic [31:0] t_start5;
+	logic [31:0] t_start6;
+	assign t_start0 = t_start[0];
+	assign t_start1 = t_start[1];
+	assign t_start2 = t_start[2];
+	assign t_start3 = t_start[3];
+	assign t_start4 = t_start[4];
+	assign t_start5 = t_start[5];
+	assign t_start6 = t_start[6];
+
 	logic [31:0] throw0;
 	logic [31:0] throw1;
 	logic [31:0] throw2;
@@ -249,37 +300,54 @@ module trajectory_generator
 	assign vx6 = vx[6];
 	assign vx7 = vx[7];
 
-	logic [31:0] vy0;
-	logic [31:0] vy1;
-	logic [31:0] vy2;
-	logic [31:0] vy3;
-	logic [31:0] vy4;
-	logic [31:0] vy5;
-	logic [31:0] vy6;
-	logic [31:0] vy7;
-	assign vy0 = vy[0];
-	assign vy1 = vy[1];
-	assign vy2 = vy[2];
-	assign vy3 = vy[3];
-	assign vy4 = vy[4];
-	assign vy5 = vy[5];
-	assign vy6 = vy[6];
-	assign vy7 = vy[7];
+	//logic [31:0] vy0;
+	//logic [31:0] vy1;
+	//logic [31:0] vy2;
+	//logic [31:0] vy3;
+	//logic [31:0] vy4;
+	//logic [31:0] vy5;
+	//logic [31:0] vy6;
+	//logic [31:0] vy7;
+	//assign vy0 = vy[0];
+	//assign vy1 = vy[1];
+	//assign vy2 = vy[2];
+	//assign vy3 = vy[3];
+	//assign vy4 = vy[4];
+	//assign vy5 = vy[5];
+	//assign vy6 = vy[6];
+	//assign vy7 = vy[7];
 
 
-	//logic [31:0] queue0;
-	//logic [31:0] queue1;
-	//logic [31:0] queue2;
-	//logic [31:0] queue3;
-	//logic [31:0] queue4;
-	//logic [31:0] queue5;
-	//logic [31:0] queue6;
-	//assign queue0 = queue[0];
-	//assign queue1 = queue[1];
-	//assign queue2 = queue[2];
-	//assign queue3 = queue[3];
-	//assign queue4 = queue[4];
-	//assign queue5 = queue[5];
-	//assign queue6 = queue[6];
+	logic [31:0] queue0;
+	logic [31:0] queue1;
+	logic [31:0] queue2;
+	logic [31:0] queue3;
+	logic [31:0] queue4;
+	logic [31:0] queue5;
+	logic [31:0] queue6;
+	assign queue0 = queue[0];
+	assign queue1 = queue[1];
+	assign queue2 = queue[2];
+	assign queue3 = queue[3];
+	assign queue4 = queue[4];
+	assign queue5 = queue[5];
+	assign queue6 = queue[6];
+
+
+
+	logic [31:0] hand0;
+	logic [31:0] hand1;
+	logic [31:0] hand2;
+	logic [31:0] hand3;
+	logic [31:0] hand4;
+	logic [31:0] hand5;
+	logic [31:0] hand6;
+	assign hand0 = hand[0];
+	assign hand1 = hand[1];
+	assign hand2 = hand[2];
+	assign hand3 = hand[3];
+	assign hand4 = hand[4];
+	assign hand5 = hand[5];
+	assign hand6 = hand[6];
 endmodule
 `default_nettype wire
