@@ -440,7 +440,7 @@ module top_level (
     end
 
     // Pattern generation and seven segment display
-    logic [6:0][2:0] siteswap_pattern; // Most significant 3 bits at index 0
+    logic [2:0] siteswap_pattern [6:0]; // Most significant 3 bits at index 0
     logic pattern_valid;
     logic [2:0] num_balls;
     logic [6:0] ss_c;
