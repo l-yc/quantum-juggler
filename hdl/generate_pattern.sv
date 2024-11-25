@@ -14,6 +14,28 @@ module generate_pattern (
     output logic [7:0] an_out
     );
 
+    logic [5:0] sum_pattern;
+
+    logic pattern_valid_pulse;
+    logic divide_valid_pulse;
+    logic [5:0] num_balls_pulse;
+    divider #(.WIDTH(6)) ball_calc (
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .dividend_in(sum_pattern), // TODO: SUM UP THE PATTERN
+        .divisor_in({3'b0, pattern_length}),
+        .data_valid_in(pattern_valid_pulse),
+        .quotient_out(num_balls_pulse),
+        .remainder_out(),
+        .data_valid_out(divide_valid_pulse),
+        .error_out(),
+        .busy_out());
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+
+        end else if (divide_valid_pulse)
+    end
+
     logic [7:0]  segment_state;
     logic [31:0] segment_counter;
     logic [6:0]  led_out;
