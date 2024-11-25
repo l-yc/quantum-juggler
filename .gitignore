@@ -1,0 +1,5 @@
+obj/
+a.out
+_history/
+sim_build
+__pycache__
