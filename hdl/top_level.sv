@@ -546,9 +546,7 @@ module top_level (
 	logic traj_valid;
     trajectory_generator
         #(
-            .GRAVITY(9.81),
-            .CLK_RATE(74_250000),
-            .DPI(96)
+            .g(6)
         ) traj_gen
         (
             .clk_in(clk_pixel),

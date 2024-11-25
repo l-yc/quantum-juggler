@@ -1,6 +1,0 @@
-<testsuites name="results">
-  <testsuite name="all" package="all">
-    <property name="random_seed" value="1732572490" />
-    <testcase name="test_a" classname="test_trajectory_generator" file="/home/lyc/Dropbox/Main/School/MIT/Fall_2024/6.2050/quantum-juggler/sim/test_trajectory_generator.py" lineno="31" time="8.280388116836548" sim_time_ns="4060.001" ratio_time="490.3153019777881" />
-  </testsuite>
-</testsuites>

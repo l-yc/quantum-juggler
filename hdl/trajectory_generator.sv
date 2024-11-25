@@ -1,9 +1,8 @@
 `default_nettype none
 module trajectory_generator
 	#(
-		parameter GRAVITY = 9.81,
-		parameter CLK_RATE = 74_250000,
-		parameter DPI = 96
+		parameter g = 6, // pixels / frame^2
+		parameter s = 20
 	)
 	(
 		input wire clk_in, // TODO what clock rate?
@@ -19,18 +18,6 @@ module trajectory_generator
 		output logic [9:0] traj_y_out[6:0],
 		output logic traj_valid
 	);
-
-	//always_comb begin
-	//	for (integer i = 0; i < 7; i += 1) begin
-	//		traj_x_out[i] = i * 50 + 50;
-	//		traj_y_out[i] = i * 50 + 50;
-	//	end
-	//	traj_valid = 1;
-	//end
-
-	// Units: pixels / frame^2
-	//localparam g = GRAVITY / 0.0254 * DPI / CLK_RATE / CLK_RATE;
-	localparam g = 4;
 
 	// MARK: calculate look up tables
 	logic [31:0] distance;
@@ -48,13 +35,14 @@ module trajectory_generator
 		assign vx[0] = 0;
 		assign vx_ready[0] = 1;
 		assign vy[0] = 0;
+
 		for (p = 1; p < 8; p += 1) begin
 			assign max_t[p] = p * frame_per_beat;
 			//assign vx[p] = distance / (p * frame_per_beat);
 			divider vx_divider(
 				.clk_in(clk_in),
 				.rst_in(rst_in),
-				.dividend_in(distance),
+				.dividend_in((p&1) == 0 ? 2 * s : distance),
 				.divisor_in(p * frame_per_beat),
 				.data_valid_in(pattern_valid),
 				.quotient_out(vx[p]),
@@ -62,8 +50,7 @@ module trajectory_generator
 				.data_valid_out(vx_ready[p]),
 				.error_out(),
 				.busy_out());
-			//assign vy[p] = $rtoi(g * p * frame_per_beat) >> 1;
-			assign vy[p] = (g * p * frame_per_beat) >> 1;
+			assign vy[p] = (p == 2) ? 0 : (g * p * frame_per_beat) >> 1;
 		end
 	endgenerate
 
@@ -193,7 +180,11 @@ module trajectory_generator
 							//traj_x_out[i] <= throw[i];
 							//traj_x_out[i] <= (t - t_start[i]);
 							//traj_x_out[i] <= vx[throw[i]];
-							traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - vx[throw[i]] * (t - t_start[i]);
+							if ((throw[i] & 1) == 0) begin
+								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s - vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s + vx[throw[i]] * (t - t_start[i]);
+							end else begin
+								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s - vx[throw[i]] * (t - t_start[i]);
+							end
 							//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
 							traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
 						end

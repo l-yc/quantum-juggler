@@ -13,8 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-CLK_RATE = 100
-
 async def init(dut):
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
@@ -35,9 +33,10 @@ async def test_a(dut):
 
     await FallingEdge(dut.clk_in)
     dut.nf_in = 0;
-    dut.pattern = [0, 0, 0, 0, 1, 3, 5]
+    #dut.pattern = [0, 0, 0, 0, 1, 3, 5]
     #dut.pattern = [0, 0, 0, 0, 3, 3, 3]
     #dut.pattern = [0, 0, 0, 0, 5, 5, 5]
+    dut.pattern = [0, 0, 0, 0, 3, 2, 4]
     dut.pattern_valid.value = 1
     dut.num_balls = 3
     #dut.hand_x_in = [1240, 40]
@@ -103,6 +102,7 @@ async def test_a(dut):
             return scat[0]
 
         ani = animation.FuncAnimation(fig=fig, func=update, frames=len(xs[0]), interval=100)
+        plt.gca().invert_yaxis()
         plt.show()
 
 
@@ -188,7 +188,7 @@ def trajectory_generator_runner():
     sources += [proj_path / "hdl" / "divider.sv"]
     sources += [proj_path / "hdl" / "evt_counter.sv"]
     build_test_args = ["-Wall"]
-    parameters = { 'CLK_RATE': CLK_RATE }
+    parameters = { 'g': 4, 's': 20 }
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(
