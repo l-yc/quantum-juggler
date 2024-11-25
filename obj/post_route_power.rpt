@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date             : Tue Nov 19 22:41:45 2024
-| Host             : eecs-digital-18 running 64-bit Ubuntu 24.04.1 LTS
+| Date             : Sun Nov 24 21:44:36 2024
+| Host             : eecs-digital-06 running 64-bit Ubuntu 24.04 LTS
 | Command          : report_power -file obj/post_route_power.rpt
 | Design           : top_level
 | Device           : xc7s50csga324-1
@@ -52,21 +52,22 @@ Table of Contents
 +--------------------------+-----------+----------+-----------+-----------------+
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
-| Clocks                   |     0.040 |       29 |       --- |             --- |
-| Slice Logic              |     0.026 |    16609 |       --- |             --- |
-|   LUT as Logic           |     0.023 |     6424 |     32600 |           19.71 |
-|   Register               |     0.001 |     6566 |     65200 |           10.07 |
-|   CARRY4                 |    <0.001 |      372 |      8150 |            4.56 |
+| Clocks                   |     0.041 |       29 |       --- |             --- |
+| Slice Logic              |     0.025 |    16959 |       --- |             --- |
+|   LUT as Logic           |     0.022 |     6666 |     32600 |           20.45 |
+|   Register               |     0.001 |     6653 |     65200 |           10.20 |
+|   CARRY4                 |    <0.001 |      377 |      8150 |            4.63 |
 |   LUT as Shift Register  |    <0.001 |       60 |      9600 |            0.63 |
 |   LUT as Distributed RAM |    <0.001 |      444 |      9600 |            4.63 |
 |   F7/F8 Muxes            |    <0.001 |       34 |     32600 |            0.10 |
-|   Others                 |     0.000 |      433 |       --- |             --- |
-| Signals                  |     0.032 |    13542 |       --- |             --- |
+|   BUFG                   |    <0.001 |        1 |        32 |            3.13 |
+|   Others                 |     0.000 |      436 |       --- |             --- |
+| Signals                  |     0.031 |    13872 |       --- |             --- |
 | Block RAM                |     0.045 |     46.5 |        75 |           62.00 |
 | MMCM                     |     0.192 |        2 |         5 |           40.00 |
 | PLL                      |     0.216 |        2 |         5 |           40.00 |
 | DSPs                     |     0.002 |        7 |       120 |            5.83 |
-| I/O                      |     0.405 |      127 |       210 |           60.48 |
+| I/O                      |     0.406 |      131 |       210 |           62.38 |
 | PHASER                   |     0.110 |       14 |       --- |             --- |
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | Static Power             |     0.078 |          |           |                 |
@@ -175,20 +176,20 @@ Table of Contents
 +----------------------------------+-----------+
 | top_level                        |     1.072 |
 |   IOBUF_sda                      |     0.003 |
-|   camera_data_fifo               |     0.003 |
-|     xpm_fifo_axis_inst           |     0.003 |
-|       xpm_fifo_base_inst         |     0.003 |
+|   camera_data_fifo               |     0.004 |
+|     xpm_fifo_axis_inst           |     0.004 |
+|       xpm_fifo_base_inst         |     0.004 |
 |   cdc_fifo                       |     0.004 |
 |     U0                           |     0.004 |
 |       inst_fifo_gen              |     0.004 |
 |   com_m                          |     0.004 |
 |     x_divider                    |     0.002 |
 |     y_divider                    |     0.002 |
-|   crw                            |     0.002 |
+|   crw                            |     0.003 |
 |     sccb_c                       |     0.002 |
 |   ddr3_mig_inst                  |     0.614 |
 |     u_ddr3_mig_mig               |     0.612 |
-|       temp_mon_enabled.u_tempmon |     0.007 |
+|       temp_mon_enabled.u_tempmon |     0.006 |
 |       u_ddr3_infrastructure      |     0.202 |
 |       u_memc_ui_top_std          |     0.403 |
 |   filter_0                       |     0.013 |
@@ -218,10 +219,10 @@ Table of Contents
 |   pdfifo                         |     0.003 |
 |     xpm_fifo_axis_inst           |     0.003 |
 |       xpm_fifo_base_inst         |     0.003 |
-|   rgbtoycrcb_m                   |     0.008 |
+|   rgbtoycrcb_m                   |     0.003 |
 |   stacker_inst                   |     0.003 |
 |   unstacker_inst                 |     0.001 |
-|   vsg                            |     0.004 |
+|   vsg                            |     0.007 |
 |   wizard_hdmi                    |     0.105 |
 |   wizard_migcam                  |     0.102 |
 +----------------------------------+-----------+
