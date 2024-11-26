@@ -61,7 +61,7 @@ module generate_pattern (
         .pattern_length(pattern_length),
         .pattern_valid_out(pattern_temp_valid));
 
-    enum {INPUT, VALIDATE} state;
+    enum logic {INPUT, VALIDATE} state;
     assign state = pattern_index >= pattern_length ? VALIDATE : INPUT;
 
     assign cat_out = ~led_out;

@@ -512,21 +512,21 @@ module top_level (
 
     //-------------- K MEANS CLUSTERING --------------//
 
-    logic [10:0] centroids_x_init [7:0];
-    logic [9:0] centroids_y_init [7:0];
+    logic [8:0] centroids_x_init [6:0];
+    logic [7:0] centroids_y_init [6:0];
     logic k_means_valid;
-    logic [10:0] centroids_x_calc [7:0];
-    logic [9:0] centroids_y_calc [7:0];
-    logic [10:0] centroids_x [7:0];
-    logic [9:0] centroids_y [7:0];
+    logic [8:0] centroids_x_calc [6:0];
+    logic [7:0] centroids_y_calc [6:0];
+    logic [10:0] centroids_x [6:0];
+    logic [9:0] centroids_y [6:0];
 
     k_means k_means_inst (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .centroids_x_in(centroids_x_init),
         .centroids_y_in(centroids_y_init),
-        .x_in(hcount_hdmi >> 2),
-        .y_in(vcount_hdmi >> 2),
+        .x_in(hcount_hdmi[10:2]),
+        .y_in(vcount_hdmi[9:2]),
         .num_balls(num_balls),
         .data_valid_in(mask),
         .new_frame(nf_hdmi),
@@ -536,14 +536,14 @@ module top_level (
 
     always_ff @(posedge clk_pixel) begin
         if (sys_rst_pixel) begin
-            for (int i=0; i<8; i=i+1) begin
+            for (int i=0; i<7; i=i+1) begin
                 centroids_x_init[i] <= 20 + 40 * i;
                 centroids_y_init[i] <= 90;
             end
         end else if (k_means_valid) begin
-            for (int i=0; i<8; i=i+1) begin
-                centroids_x[i] <= centroids_x_calc[i] << 2;
-                centroids_y[i] <= centroids_y_calc[i] << 2;
+            for (int i=0; i<7; i=i+1) begin
+                centroids_x[i] <= {centroids_x_calc[i], 2'b0};
+                centroids_y[i] <= {centroids_y_calc[i], 2'b0};
             end
             centroids_x_init <= centroids_x_calc;
             centroids_y_init <= centroids_y_calc;
@@ -559,8 +559,7 @@ module top_level (
         ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
         ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
         ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
-        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7) ||
-        ((vcount_hdmi == centroids_y[7] || hcount_hdmi == centroids_x[7]) && num_balls >= 8));
+        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
 
     //-------------- END K MEANS CLUSTERING --------------//
 

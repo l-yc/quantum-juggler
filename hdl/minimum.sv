@@ -1,52 +1,28 @@
+`timescale 1ns / 1ps
 `default_nettype none
 
 module minimum (
-    input wire [11:0] vals_in0,
-    input wire [11:0] vals_in1,
-    input wire [11:0] vals_in2,
-    input wire [11:0] vals_in3,
-    input wire [11:0] vals_in4,
-    input wire [11:0] vals_in5,
-    input wire [11:0] vals_in6,
-    input wire [11:0] vals_in7,
+    input wire [6:0][8:0] vals_in,
     input wire [2:0] max,
     output logic [2:0] minimum_index
     );
-    logic [11:0] min;
-    logic [2:0] index;
+
+    logic [8:0] min [6:0];
+    logic [2:0] index [6:0];
+    assign minimum_index = index[max-1];
+
     always_comb begin
-        minimum_index = 0;
-//        min = vals_in0;
-//        index = 0;
-//        if (max <= 3'b010 && vals_in1 < min) begin
-//            min = vals_in1;
-//            index = 1;
-//        end
-//        if (max <= 3'b011 && vals_in2 < min) begin
-//            min = vals_in2;
-//            index = 2;
-//        end
-//        if (max <= 3'b100 && vals_in3 < min) begin
-//            min = vals_in3;
-//            index = 3;
-//        end
-//        if (max <= 3'b101 && vals_in4 < min) begin
-//            min = vals_in4;
-//            index = 4;
-//        end
-//        if (max <= 3'b110 && vals_in5 < min) begin
-//            min = vals_in5;
-//            index = 5;
-//        end
-//        if (max <= 3'b111 && vals_in6 < min) begin
-//            min = vals_in6;
-//            index = 6;
-//        end
-//        if (max == 3'b111 && vals_in7 < min) begin
-//            min = vals_in7;
-//            index = 7;
-//        end
-//        minimum_index = index;
+        min[0] = vals_in[0];
+        index[0] = 0;
+        for (int i=1; i<7; i=i+1) begin
+            if (vals_in[i] < min[i-1]) begin
+                min[i] = vals_in[i];
+                index[i] = i;
+            end else begin
+                min[i] = min[i-1];
+                index[i] = index[i-1];
+            end
+        end
     end
 endmodule
 
