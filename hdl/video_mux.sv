@@ -23,8 +23,8 @@ module video_mux (
     logic [23:0] l_2;
     always_comb begin
         if (target_in)
-			l_2 = (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
-            //l_2 = crosshair_in ? 24'h00FF00 : l_1;
+			//l_2 = (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
+            l_2 = crosshair_in ? 24'h00FF00 : l_1;
         else
             l_2 = l_1;
     end

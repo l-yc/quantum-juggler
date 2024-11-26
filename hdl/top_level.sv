@@ -510,35 +510,59 @@ module top_level (
         mask <= (selected_channel > lower_threshold) && (selected_channel <= upper_threshold);
     end
 
-    // Center of mass (tally all mask=1 pixels for a frame and calculate their center of mass)
-    logic [10:0] x_com, x_com_calc; // long term x_com and output from module, resp
-    logic [9:0] y_com, y_com_calc;  // long term y_com and output from module, resp
-    logic new_com;                  // used to know when to update x_com and y_com
-    center_of_mass com_m(
+    //-------------- K MEANS CLUSTERING --------------//
+
+    logic [10:0] centroids_x_init [7:0];
+    logic [9:0] centroids_y_init [7:0];
+    logic k_means_valid;
+    logic [10:0] centroids_x_calc [7:0];
+    logic [9:0] centroids_y_calc [7:0];
+    logic [10:0] centroids_x [7:0];
+    logic [9:0] centroids_y [7:0];
+
+    k_means k_means_inst (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .x_in(hcount_hdmi),
-        .y_in(vcount_hdmi),
-        .valid_in(mask),
-        .tabulate_in((nf_hdmi)),
-        .x_out(x_com_calc),
-        .y_out(y_com_calc),
-        .valid_out(new_com));
+        .centroids_x_in(centroids_x_init),
+        .centroids_y_in(centroids_y_init),
+        .x_in(hcount_hdmi >> 2),
+        .y_in(vcount_hdmi >> 2),
+        .num_balls(num_balls),
+        .data_valid_in(mask),
+        .new_frame(nf_hdmi),
+        .data_valid_out(k_means_valid),
+        .centroids_x_out(centroids_x_calc),
+        .centroids_y_out(centroids_y_calc));
 
-    // Update center of mass x_com, y_com based on new_com signal
     always_ff @(posedge clk_pixel) begin
         if (sys_rst_pixel) begin
-            x_com <= 0;
-            y_com <= 0;
-        end if (new_com) begin
-            x_com <= x_com_calc;
-            y_com <= y_com_calc;
+            for (int i=0; i<8; i=i+1) begin
+                centroids_x_init[i] <= 20 + 40 * i;
+                centroids_y_init[i] <= 90;
+            end
+        end else if (k_means_valid) begin
+            for (int i=0; i<8; i=i+1) begin
+                centroids_x[i] <= centroids_x_calc[i] << 2;
+                centroids_y[i] <= centroids_y_calc[i] << 2;
+            end
+            centroids_x_init <= centroids_x_calc;
+            centroids_y_init <= centroids_y_calc;
         end
     end
 
     // Crosshair output
     logic is_crosshair;
-    assign is_crosshair = (vcount_hdmi == y_com) || (hcount_hdmi == x_com);
+    assign is_crosshair = (
+        ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
+        ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
+        ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
+        ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
+        ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
+        ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
+        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7) ||
+        ((vcount_hdmi == centroids_y[7] || hcount_hdmi == centroids_x[7]) && num_balls >= 8));
+
+    //-------------- END K MEANS CLUSTERING --------------//
 
 	// MARK: trajectory modules {{{
 	logic [10:0] traj_x_out[6:0];
