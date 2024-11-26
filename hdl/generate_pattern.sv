@@ -67,23 +67,23 @@ module generate_pattern (
     assign cat_out = ~led_out;
     assign an_out = ~segment_state;
 
-    // For debugging in gtkwave
-    logic [2:0] pattern_out_1, pattern_out_2, pattern_out_3, pattern_out_4, pattern_out_5, pattern_out_6, pattern_out_7;
-    assign pattern_out_1 = pattern_out[0];
-    assign pattern_out_2 = pattern_out[1];
-    assign pattern_out_3 = pattern_out[2];
-    assign pattern_out_4 = pattern_out[3];
-    assign pattern_out_5 = pattern_out[4];
-    assign pattern_out_6 = pattern_out[5];
-    assign pattern_out_7 = pattern_out[6];
-    logic [2:0] pattern_temp_1, pattern_temp_2, pattern_temp_3, pattern_temp_4, pattern_temp_5, pattern_temp_6, pattern_temp_7;
-    assign pattern_temp_1 = pattern_temp[0];
-    assign pattern_temp_2 = pattern_temp[1];
-    assign pattern_temp_3 = pattern_temp[2];
-    assign pattern_temp_4 = pattern_temp[3];
-    assign pattern_temp_5 = pattern_temp[4];
-    assign pattern_temp_6 = pattern_temp[5];
-    assign pattern_temp_7 = pattern_temp[6];
+//    // For debugging in gtkwave
+//    logic [2:0] pattern_out_1, pattern_out_2, pattern_out_3, pattern_out_4, pattern_out_5, pattern_out_6, pattern_out_7;
+//    assign pattern_out_1 = pattern_out[0];
+//    assign pattern_out_2 = pattern_out[1];
+//    assign pattern_out_3 = pattern_out[2];
+//    assign pattern_out_4 = pattern_out[3];
+//    assign pattern_out_5 = pattern_out[4];
+//    assign pattern_out_6 = pattern_out[5];
+//    assign pattern_out_7 = pattern_out[6];
+//    logic [2:0] pattern_temp_1, pattern_temp_2, pattern_temp_3, pattern_temp_4, pattern_temp_5, pattern_temp_6, pattern_temp_7;
+//    assign pattern_temp_1 = pattern_temp[0];
+//    assign pattern_temp_2 = pattern_temp[1];
+//    assign pattern_temp_3 = pattern_temp[2];
+//    assign pattern_temp_4 = pattern_temp[3];
+//    assign pattern_temp_5 = pattern_temp[4];
+//    assign pattern_temp_6 = pattern_temp[5];
+//    assign pattern_temp_7 = pattern_temp[6];
 
     always_comb begin
         if ((state == VALIDATE && pattern_temp_valid) || state == INPUT) begin

@@ -13,23 +13,23 @@ module validate_pattern (
     logic [13:0][2:0] countdown [6:0];  // 7 14x3 packed array of countdowns
     logic [13:0] countdown_valid [6:0]; // 1 if we need to check value, 0 for ignore
 
-    // For debugging in gtkwave
-    logic [13:0][2:0] countdown_1, countdown_2, countdown_3, countdown_4, countdown_5, countdown_6, countdown_7;
-    logic [13:0] countdown_valid_1, countdown_valid_2, countdown_valid_3, countdown_valid_4, countdown_valid_5, countdown_valid_6, countdown_valid_7;
-    assign countdown_1 = countdown[0];
-    assign countdown_2 = countdown[1];
-    assign countdown_3 = countdown[2];
-    assign countdown_4 = countdown[3];
-    assign countdown_5 = countdown[4];
-    assign countdown_6 = countdown[5];
-    assign countdown_7 = countdown[6];
-    assign countdown_valid_1 = countdown_valid[0];
-    assign countdown_valid_2 = countdown_valid[1];
-    assign countdown_valid_3 = countdown_valid[2];
-    assign countdown_valid_4 = countdown_valid[3];
-    assign countdown_valid_5 = countdown_valid[4];
-    assign countdown_valid_6 = countdown_valid[5];
-    assign countdown_valid_7 = countdown_valid[6];
+//    // For debugging in gtkwave
+//    logic [13:0][2:0] countdown_1, countdown_2, countdown_3, countdown_4, countdown_5, countdown_6, countdown_7;
+//    logic [13:0] countdown_valid_1, countdown_valid_2, countdown_valid_3, countdown_valid_4, countdown_valid_5, countdown_valid_6, countdown_valid_7;
+//    assign countdown_1 = countdown[0];
+//    assign countdown_2 = countdown[1];
+//    assign countdown_3 = countdown[2];
+//    assign countdown_4 = countdown[3];
+//    assign countdown_5 = countdown[4];
+//    assign countdown_6 = countdown[5];
+//    assign countdown_7 = countdown[6];
+//    assign countdown_valid_1 = countdown_valid[0];
+//    assign countdown_valid_2 = countdown_valid[1];
+//    assign countdown_valid_3 = countdown_valid[2];
+//    assign countdown_valid_4 = countdown_valid[3];
+//    assign countdown_valid_5 = countdown_valid[4];
+//    assign countdown_valid_6 = countdown_valid[5];
+//    assign countdown_valid_7 = countdown_valid[6];
 
     // Memoization block for checking if all values are valid
     logic [97:0] cumulative_valid;

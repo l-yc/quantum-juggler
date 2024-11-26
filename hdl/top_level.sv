@@ -146,7 +146,7 @@ module top_level (
 
     //-------------- GAUSSIAN BLUR HERE --------------//
 
-    localparam NUM_BLUR = 3; 
+    localparam NUM_BLUR = 2; 
     logic [10:0] f_hcount [NUM_BLUR-1:0]; // hcount from filter modules
     logic [9:0] f_vcount [NUM_BLUR-1:0];  // vcount from filter modules
     logic [15:0] f_pixel [NUM_BLUR-1:0];  // pixel data from filter modules
@@ -564,53 +564,53 @@ module top_level (
 
     //-------------- END K MEANS CLUSTERING --------------//
 
-	// MARK: trajectory modules {{{
-	logic [10:0] traj_x_out[6:0];
-	logic [9:0] traj_y_out[6:0];
-	logic traj_valid;
-    trajectory_generator
-        #(
-            .GRAVITY(9.81),
-            .CLK_RATE(100_000000),
-            .DPI(96)
-        ) traj_gen
-        (
-            .clk_in(clk_pixel), // TODO what clock rate?
-            .rst_in(sys_rst_pixel),
-            .pattern({0, 0, 0, 0, 1, 3, 5}),
-            .pattern_valid(1),
-            .num_balls(3), // TODO replace with num balls
-            .hand_x_in({1240, 40}), // TODO replace with hands
-            .hand_y_in({719, 719}), // TODO replace with hands
-            .cyc_per_beat(10_000000),
-            .traj_x_out(traj_x_out),
-            .traj_y_out(traj_y_out),
-            .traj_valid(traj_valid)
-        );	
-	
-	logic [7:0] trajectory_red;
-	logic [7:0] trajectory_green;
-	logic [7:0] trajectory_blue;
-
-    draw_trajectory draw_traj
-        (
-            .clk_in(clk_pixel), // TODO what clock rate?
-            .rst_in(sys_rst_pixel),
-
-            .num_balls(3), // TODO replace with num balls
-            .traj_x_in(traj_x_out),
-            .traj_y_in(traj_y_out),
-            .traj_valid(traj_valid),
-            .hand_x_in({1240, 40}), // TODO replace with hands
-            .hand_y_in({719, 719}), // TODO replace with hands
-
-            .hcount_in(hcount_hdmi),
-            .vcount_in(vcount_hdmi),
-            .red_out(trajectory_red),
-            .green_out(trajectory_green),
-            .blue_out(trajectory_blue)
-        );
-    // }}}
+//	// MARK: trajectory modules {{{
+//	logic [10:0] traj_x_out[6:0];
+//	logic [9:0] traj_y_out[6:0];
+//	logic traj_valid;
+//    trajectory_generator
+//        #(
+//            .GRAVITY(9.81),
+//            .CLK_RATE(100_000000),
+//            .DPI(96)
+//        ) traj_gen
+//        (
+//            .clk_in(clk_pixel), // TODO what clock rate?
+//            .rst_in(sys_rst_pixel),
+//            .pattern({0, 0, 0, 0, 1, 3, 5}),
+//            .pattern_valid(1),
+//            .num_balls(3), // TODO replace with num balls
+//            .hand_x_in({1240, 40}), // TODO replace with hands
+//            .hand_y_in({719, 719}), // TODO replace with hands
+//            .cyc_per_beat(10_000000),
+//            .traj_x_out(traj_x_out),
+//            .traj_y_out(traj_y_out),
+//            .traj_valid(traj_valid)
+//        );	
+//	
+//	logic [7:0] trajectory_red;
+//	logic [7:0] trajectory_green;
+//	logic [7:0] trajectory_blue;
+//
+//    draw_trajectory draw_traj
+//        (
+//            .clk_in(clk_pixel), // TODO what clock rate?
+//            .rst_in(sys_rst_pixel),
+//
+//            .num_balls(3), // TODO replace with num balls
+//            .traj_x_in(traj_x_out),
+//            .traj_y_in(traj_y_out),
+//            .traj_valid(traj_valid),
+//            .hand_x_in({1240, 40}), // TODO replace with hands
+//            .hand_y_in({719, 719}), // TODO replace with hands
+//
+//            .hcount_in(hcount_hdmi),
+//            .vcount_in(vcount_hdmi),
+//            .red_out(trajectory_red),
+//            .green_out(trajectory_green),
+//            .blue_out(trajectory_blue)
+//        );
+//    // }}}
 
     // HDMI video signal generator
     video_sig_gen vsg (
@@ -631,7 +631,8 @@ module top_level (
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .sel_channel_in(selected_channel),
         .thresholded_pixel_in(mask),
-		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
+		//.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
+		.trajectory_pixel_in(0),
         .crosshair_in(is_crosshair),
         .pixel_out({red, green, blue}));
 

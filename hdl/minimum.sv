@@ -15,37 +15,38 @@ module minimum (
     logic [11:0] min;
     logic [2:0] index;
     always_comb begin
-        min = vals_in0;
-        index = 0;
-        if (max <= 3'b010 && vals_in1 < min) begin
-            min = vals_in1;
-            index = 1;
-        end
-        if (max <= 3'b011 && vals_in2 < min) begin
-            min = vals_in2;
-            index = 2;
-        end
-        if (max <= 3'b100 && vals_in3 < min) begin
-            min = vals_in3;
-            index = 3;
-        end
-        if (max <= 3'b101 && vals_in4 < min) begin
-            min = vals_in4;
-            index = 4;
-        end
-        if (max <= 3'b110 && vals_in5 < min) begin
-            min = vals_in5;
-            index = 5;
-        end
-        if (max <= 3'b111 && vals_in6 < min) begin
-            min = vals_in6;
-            index = 6;
-        end
-        if (max == 3'b111 && vals_in7 < min) begin
-            min = vals_in7;
-            index = 7;
-        end
-        minimum_index = index;
+        minimum_index = 0;
+//        min = vals_in0;
+//        index = 0;
+//        if (max <= 3'b010 && vals_in1 < min) begin
+//            min = vals_in1;
+//            index = 1;
+//        end
+//        if (max <= 3'b011 && vals_in2 < min) begin
+//            min = vals_in2;
+//            index = 2;
+//        end
+//        if (max <= 3'b100 && vals_in3 < min) begin
+//            min = vals_in3;
+//            index = 3;
+//        end
+//        if (max <= 3'b101 && vals_in4 < min) begin
+//            min = vals_in4;
+//            index = 4;
+//        end
+//        if (max <= 3'b110 && vals_in5 < min) begin
+//            min = vals_in5;
+//            index = 5;
+//        end
+//        if (max <= 3'b111 && vals_in6 < min) begin
+//            min = vals_in6;
+//            index = 6;
+//        end
+//        if (max == 3'b111 && vals_in7 < min) begin
+//            min = vals_in7;
+//            index = 7;
+//        end
+//        minimum_index = index;
     end
 endmodule
 
