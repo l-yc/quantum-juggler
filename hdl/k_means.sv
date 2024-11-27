@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 30) (
+module k_means #(parameter MAX_ITER = 15) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
