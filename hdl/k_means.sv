@@ -26,7 +26,7 @@ module k_means #(parameter MAX_ITER = 30) (
         DIVIDE = 2
     } state;
 
-    logic [3:0] update_state;
+    logic update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -40,14 +40,55 @@ module k_means #(parameter MAX_ITER = 30) (
     logic [23:0] total_mass [6:0];
     logic [23:0] x_div [6:0];
     logic [23:0] y_div [6:0];
-    logic [23:0] remainder_out_x [6:0];
+
+    // for debugging in gtkwave
+    logic [23:0] x_sum_1, x_sum_2, x_sum_3, x_sum_4, x_sum_5, x_sum_6, x_sum_7;
+    logic [23:0] y_sum_1, y_sum_2, y_sum_3, y_sum_4, y_sum_5, y_sum_6, y_sum_7;
+    logic [23:0] total_mass_1, total_mass_2, total_mass_3, total_mass_4, total_mass_5, total_mass_6, total_mass_7;
+    logic [23:0] x_div_1, x_div_2, x_div_3, x_div_4, x_div_5, x_div_6, x_div_7;
+    logic [23:0] y_div_1, y_div_2, y_div_3, y_div_4, y_div_5, y_div_6, y_div_7;
+    assign x_sum_1 = x_sum[0];
+    assign x_sum_2 = x_sum[1];
+    assign x_sum_3 = x_sum[2];
+    assign x_sum_4 = x_sum[3];
+    assign x_sum_5 = x_sum[4];
+    assign x_sum_6 = x_sum[5];
+    assign x_sum_7 = x_sum[6];
+    assign y_sum_1 = y_sum[0];
+    assign y_sum_2 = y_sum[1];
+    assign y_sum_3 = y_sum[2];
+    assign y_sum_4 = y_sum[3];
+    assign y_sum_5 = y_sum[4];
+    assign y_sum_6 = y_sum[5];
+    assign y_sum_7 = y_sum[6];
+    assign total_mass_1 = total_mass[0];
+    assign total_mass_2 = total_mass[1];
+    assign total_mass_3 = total_mass[2];
+    assign total_mass_4 = total_mass[3];
+    assign total_mass_5 = total_mass[4];
+    assign total_mass_6 = total_mass[5];
+    assign total_mass_7 = total_mass[6];
+    assign x_div_1 = x_div[0];
+    assign x_div_2 = x_div[1];
+    assign x_div_3 = x_div[2];
+    assign x_div_4 = x_div[3];
+    assign x_div_5 = x_div[4];
+    assign x_div_6 = x_div[5];
+    assign x_div_7 = x_div[6];
+    assign y_div_1 = y_div[0];
+    assign y_div_2 = y_div[1];
+    assign y_div_3 = y_div[2];
+    assign y_div_4 = y_div[3];
+    assign y_div_5 = y_div[4];
+    assign y_div_6 = y_div[5];
+    assign y_div_7 = y_div[6];
+
+    logic [23:0] x_sum_temp [BRAM_WIDTH-1:0][6:0];
+    logic [23:0] y_sum_temp [BRAM_WIDTH-1:0][6:0];
+    logic [23:0] total_mass_temp [BRAM_WIDTH-1:0][6:0];
+
     logic [6:0] data_valid_out_x;
-    logic [6:0] error_out_x;
-    logic [6:0] busy_out_x;
-    logic [23:0] remainder_out_y [6:0];
     logic [6:0] data_valid_out_y;
-    logic [6:0] error_out_y;
-    logic [6:0] busy_out_y;
     
     logic [6:0] x_ready;
     logic [6:0] y_ready;
@@ -65,37 +106,26 @@ module k_means #(parameter MAX_ITER = 30) (
                 .rst_in(rst_in),
                 .dividend_in(x_sum[l]),
                 .divisor_in(total_mass[l]),
-                .data_valid_in(div_ready && total_mass[l] > 0),
+                .data_valid_in(div_ready),
                 .quotient_out(x_div[l]),
-                .remainder_out(remainder_out_x[l]),
+                .remainder_out(),
                 .data_valid_out(data_valid_out_x[l]),
-                .error_out(error_out_x[l]),
-                .busy_out(busy_out_x[l]));
+                .error_out(),
+                .busy_out());
             divider #(.WIDTH(24)) div_y (
                 .clk_in(clk_in),
                 .rst_in(rst_in),
                 .dividend_in(y_sum[l]),
                 .divisor_in(total_mass[l]),
-                .data_valid_in(div_ready && total_mass[l] > 0),
+                .data_valid_in(div_ready),
                 .quotient_out(y_div[l]),
-                .remainder_out(remainder_out_y[l]),
+                .remainder_out(),
                 .data_valid_out(data_valid_out_y[l]),
-                .error_out(error_out_y[l]),
-                .busy_out(busy_out_y[l]));
+                .error_out(),
+                .busy_out());
             end
     endgenerate
-
-    generate
-        genvar j;
-        for (j=0; j<64; j=j+1) begin
-            minimum min(
-                .vals_in(centroid_distance[j]),
-                .max(num_balls),
-                .minimum_index(index[j])
-            );
-        end
-    endgenerate
-    
+   
     // Create the BRAMs for storing mask data
     logic [BRAM_WIDTH-1:0] bram_data_in;
     generate
@@ -142,14 +172,45 @@ module k_means #(parameter MAX_ITER = 30) (
         end
     end
 
+    // Combinational minimum module
+    generate
+        genvar j;
+        for (j=0; j<64; j=j+1) begin
+            minimum min(
+                .vals_in(centroid_distance[j]),
+                .max(num_balls),
+                .minimum_index(index[j])
+            );
+        end
+    endgenerate
+ 
     // Sum up all the values 
     always_comb begin
-        if (state == UPDATE && update_state == 2'b10) begin
-            for (integer i=0; i<BRAM_WIDTH; i=i+1) begin
-                if (bram_data_out[x_read>>6][i] == 1'b1) begin
-                    x_sum[index[i]] = x_sum[index[i]] + x_read + i;
-                    y_sum[index[i]] = y_sum[index[i]] + y_read;
-                    total_mass[index[i]] = total_mass[index[i]] + 1;
+        for (int j=0; j<7; j=j+1) begin
+            if (bram_data_out[x_read>>6][0] == 1'b1 && j == index[0]) begin
+                // There is a mask at this (x,y)
+                x_sum_temp[0][j] = x_read;
+                y_sum_temp[0][j] = y_read;
+                total_mass_temp[0][j] = 1;
+            end else begin
+                // There is no mask at this (x,y)
+                x_sum_temp[0][j] = 0;
+                y_sum_temp[0][j] = 0;
+                total_mass_temp[0][j] = 0;
+            end
+        end
+        for (int i=1; i<BRAM_WIDTH; i=i+1) begin
+            for (int j=0; j<7; j=j+1) begin
+                if (bram_data_out[x_read>>6][i] == 1'b1 && j == index[i]) begin
+                    // There is a mask at this (x,y)
+                    x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + i;
+                    y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
+                    total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
+                end else begin
+                    // There is no mask at this (x,y)
+                    x_sum_temp[i][j] = x_sum_temp[i-1][j];
+                    y_sum_temp[i][j] = y_sum_temp[i-1][j];
+                    total_mass_temp[i][j] = total_mass_temp[i-1][j];
                 end
             end
         end
@@ -207,30 +268,24 @@ module k_means #(parameter MAX_ITER = 30) (
 
                     case (update_state) 
                         0: begin
-                            update_state <= 2'b01;
-                            for (int i=0; i<32; i=i+1) begin
+                            update_state <= 1;
+                            for (int i=0; i<BRAM_WIDTH; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     centroid_distance[i][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read[0] + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
+                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
                                         ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
                                     );
                                 end
                             end
                         end
                         1: begin
-                            update_state <= 2'b10;
-                            for (integer i=32; i<64; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read[0] + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
+                            for (int i=0; i<7; i=i+1) begin
+                                x_sum[i] <= x_sum_temp[BRAM_WIDTH-1][i] + x_sum[i];
+                                y_sum[i] <= y_sum_temp[BRAM_WIDTH-1][i] + y_sum[i];
+                                total_mass[i] <= total_mass_temp[BRAM_WIDTH-1][i] + total_mass[i];
                             end
-                        end
-                        2: begin
-                            update_state <= 2'b00;
-                            if (x_read == 9'b100000000) begin
+                            update_state <= 0;
+                            if (x_read == 256) begin
                                 x_read <= 0;
                                 y_read <= y_read + 1;
                             end else begin
@@ -245,9 +300,10 @@ module k_means #(parameter MAX_ITER = 30) (
                     endcase           
                 end
                 DIVIDE: begin
+                    update_state <= 0;
                     div_ready <= 0;
                     if (x_ready == 7'b1111111 && y_ready == 7'b1111111) begin
-                        for (integer i =0; i<7; i= i+1) begin
+                        for (int i =0; i<7; i=i+1) begin
                             x_ready[i] <= 0;
                             y_ready[i] <= 0;
                             x_sum[i] <= 0;
@@ -270,11 +326,11 @@ module k_means #(parameter MAX_ITER = 30) (
                                 x_ready[i] <= 1;
                                 y_ready[i] <= 1;
                             end else begin
-                                if (data_valid_out_x[i] && !error_out_x[i]) begin
+                                if (data_valid_out_x[i]) begin
                                     x_ready[i] <= 1;
                                     centroids_x_out[i] <= x_div[i];
                                 end
-                                if (data_valid_out_y[i] && !error_out_y[i]) begin
+                                if (data_valid_out_y[i]) begin
                                     y_ready[i] <= 1;
                                     centroids_y_out[i] <= y_div[i];
                                 end
