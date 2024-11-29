@@ -80,6 +80,7 @@ async def test_a(dut):
     print(xs[0])
     print(xs[1])
     print(xs[2])
+    np.savez('model_balls.npz', xs0=xs[0], xs1=xs[1], xs2=xs[2], ys0=ys[0], ys1=ys[1], ys2=ys[2])
 
     print('ok')
     if True:
