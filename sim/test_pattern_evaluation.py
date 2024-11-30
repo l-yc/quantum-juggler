@@ -33,18 +33,26 @@ async def test_a(dut):
 
     await FallingEdge(dut.clk_in)
     dut.num_balls = 3;
+    await ClockCycles(dut.clk_in, 1)
 
-    await ClockCycles(dut.clk_in, 1) #wait three clock cycles
+    dut.data_valid_in.value = 1;
+    dut.model_balls_x.value = [0, 0, 0, 0, 500, 100, 0];
+    dut.model_balls_y.value = [0, 0, 0, 0, 500, 100, 0];
+    dut.real_balls_x.value = [0, 0, 0, 0, 10, 510, 110];
+    dut.real_balls_y.value = [0, 0, 0, 0, 10, 510, 110];
+    await ClockCycles(dut.clk_in, 1)
+    dut.data_valid_in.value = 0;
 
-    dut.model_balls_x = [0, 0, 0, 0, 500, 100, 0];
-    dut.model_balls_y = [0, 0, 0, 0, 500, 100, 0];
-    dut.real_balls_x = [0, 0, 0, 0, 10, 510, 110];
-    dut.real_balls_y = [0, 0, 0, 0, 10, 510, 110];
-
-    #await with_timeout(RisingEdge(dut.data_valid_out),5000,'ns')
-    await RisingEdge(dut.data_valid_out)
-    print(dut.pattern_error)
-    print(dut.pattern_correct)
+    await with_timeout(RisingEdge(dut.data_valid_out),5000,'ns')
+    #await RisingEdge(dut.data_valid_out)
+    await ClockCycles(dut.clk_in, 1)
+    pat_err = dut.pattern_error.value.integer
+    pat_ok = dut.pattern_correct.value
+    print(pat_err, pat_ok)
+    assert pat_err == 600
+    assert dut.ans[0].value == 2
+    assert dut.ans[1].value == 0
+    assert dut.ans[2].value == 1
 
     #if True:
     #    # matploblib stuff
@@ -80,7 +88,7 @@ def pattern_evaluation_runner():
     sources += [proj_path / "hdl" / "divider.sv"]
     sources += [proj_path / "hdl" / "evt_counter.sv"]
     build_test_args = ["-Wall"]
-    parameters = {}
+    parameters = {'THRESHOLD': 1000}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

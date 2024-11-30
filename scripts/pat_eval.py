@@ -31,6 +31,10 @@ for i in range(t):
     #real_balls_x = xs[i] + np.ones(num_balls) * 20
     #real_balls_y = ys[i] + np.ones(num_balls) * 10
 
+    #model_balls_x = [0, 100, 500];
+    #model_balls_y = [0, 100, 500];
+    #real_balls_x = [110, 510, 10];
+    #real_balls_y = [110, 510, 10];
 
     # brute force
     arr = np.arange(num_balls)
@@ -114,11 +118,12 @@ for i in range(t):
         # state FORI_UPDATE
 
     ans = [ None for _ in range(num_balls) ];
-    for j in range(num_balls+1):
+    for j in range(1, num_balls+1):
         ans[p[j] - 1] = j - 1;              # state ANS
 
     # inspect
     ans = tuple(ans)
+    #print(best, mini, ans, -v[0])
     if ans not in alts:
         print(best, mini, ans, -v[0])
 
@@ -134,7 +139,7 @@ for i in range(t):
     while True:
         # state: FORI_INIT
         if state == 'FORI_INIT':
-            i = 0
+            i = 1
             state = 'FORI_CHECK'
         elif state == 'FORI_CHECK':
             if i < num_balls+1:
@@ -154,7 +159,7 @@ for i in range(t):
             j1 = None # state WHILE1_BODY1
             state = 'FORJ1_INIT'
         elif state == 'FORJ1_INIT':
-            j = 0
+            j = 1
             state = 'FORJ1_CHECK'
         elif state == 'FORJ1_CHECK':
             if j < num_balls+1:
@@ -203,7 +208,7 @@ for i in range(t):
             state = 'FORI_CHECK'
         elif state == 'ANS':
             ans2 = [ None for _ in range(num_balls) ];
-            for j in range(num_balls+1):
+            for j in range(1, num_balls+1):
                 ans2[p[j] - 1] = j - 1;              # state ANS
             ans2 = tuple(ans2)
             assert ans == ans2

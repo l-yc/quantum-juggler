@@ -6,13 +6,14 @@ module pattern_evaluation
 	(
 		input wire clk_in, // TODO what clock rate?
 		input wire rst_in,
+		input wire data_valid_in,
 		input wire [2:0] num_balls,
 		input wire [10:0] model_balls_x[6:0],
 		input wire [9:0] model_balls_y[6:0],
 		input wire [10:0] real_balls_x[6:0],
 		input wire [9:0] real_balls_y[6:0],
 		output logic data_valid_out,
-		output logic [14:0] pattern_error,
+		output logic signed [14:0] pattern_error,
 		output logic pattern_correct
 	);
 
@@ -26,8 +27,8 @@ module pattern_evaluation
 						A[i][j] = 0;
 					end else begin
 						A[i][j] = 
-							(model_balls_x[i-1] - real_balls_x[j-1]) * (model_balls_x[i-1] - real_balls_x[j-1]) +
-							(model_balls_y[i-1] - real_balls_y[j-1]) * (model_balls_y[i-1] - real_balls_y[j-1]);
+							($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) * ($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) +
+							($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1])) * ($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1]));
 					end
 				end
 			end
@@ -36,23 +37,23 @@ module pattern_evaluation
 
 	// state machine
     typedef enum {
-		INIT,
-		FORI_INIT,
-		FORI_CHECK,
-		FORI_BODY,
-		FORI_UPDATE,
-		FORJ1_INIT,
-		FORJ1_CHECK,
-		FORJ1_BODY,
-		FORJ1_UPDATE,
-		WHILE1_BODY1,
-		WHILE1_BODY2,
-		WHILE1_CHECK,
-		WHILE2_BODY,
-		WHILE2_CHECK,
-		ANS
+		INIT = 0,
+		FORI_INIT = 1,
+		FORI_CHECK = 2,
+		FORI_BODY = 3,
+		FORI_UPDATE = 4,
+		FORJ1_INIT = 5,
+		FORJ1_CHECK = 6,
+		FORJ1_BODY = 7,
+		FORJ1_UPDATE = 8,
+		WHILE1_BODY1 = 9,
+		WHILE1_BODY2 = 10,
+		WHILE1_CHECK = 11,
+		WHILE2_BODY = 12,
+		WHILE2_CHECK = 13,
+		ANS = 14
 	} state_t;
-	state_t prev, state, next;
+	logic [3:0] prev, state, next;
 
     logic [31:0] u [7:0];
     logic [31:0] v [7:0];
@@ -66,26 +67,25 @@ module pattern_evaluation
 	logic [31:0] i0;
 	logic signed [31:0] delta;
 	logic [31:0] j1;
-	logic signed [31:0] cur;
     logic [2:0] ans [6:0]; // permutation corr. to best matching
 
 	always_comb begin
         if (rst_in) next = INIT;
         else begin
             case (state)
-                INIT: next = FORI_INIT;
+				INIT: next = (data_valid_in ? FORI_INIT : INIT);
 				FORI_INIT: next = FORI_CHECK;
-				FORI_CHECK: next = state_t'((i <= num_balls) ? FORI_BODY : ANS);
+				FORI_CHECK: next = ((i <= num_balls) ? FORI_BODY : ANS);
 				FORI_BODY: next = WHILE1_BODY1;
 				WHILE1_BODY1: next = FORJ1_INIT;
 				FORJ1_INIT: next = FORJ1_CHECK;
-				FORJ1_CHECK: next = state_t'((j <= num_balls) ? FORJ1_BODY : WHILE1_BODY2);
+				FORJ1_CHECK: next = ((j <= num_balls) ? FORJ1_BODY : WHILE1_BODY2);
 				FORJ1_BODY: next = FORJ1_UPDATE;
 				FORJ1_UPDATE: next = FORJ1_CHECK;
 				WHILE1_BODY2: next = WHILE1_CHECK;
-				WHILE1_CHECK: next = state_t'((p[j0] == 0) ? WHILE2_BODY : WHILE1_BODY1);
+				WHILE1_CHECK: next = ((p[j0] == 0) ? WHILE2_BODY : WHILE1_BODY1);
 				WHILE2_BODY: next = WHILE2_CHECK;
-				WHILE2_CHECK: next = state_t'((j0 == 0) ? FORI_UPDATE : WHILE2_BODY);
+				WHILE2_CHECK: next = ((j0 == 0) ? FORI_UPDATE : WHILE2_BODY);
 				FORI_UPDATE: next = FORI_CHECK;
 				ANS: next = ANS;
                 default: next = INIT;
@@ -104,6 +104,8 @@ module pattern_evaluation
 						way[x] <= 0;
 					end
 				end
+
+				data_valid_out <= 0;
 			end
 			FORI_INIT: begin
 				i <= 1;
@@ -130,13 +132,12 @@ module pattern_evaluation
 			end
 			FORJ1_CHECK: begin end
 			FORJ1_BODY: begin
-				if (!used[j]) begin
-					cur <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
-					if ($signed(cur) < $signed(minv[j])) begin
-						minv[j] <= cur;
+				if (used[j] == 0) begin
+					if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(minv[j])) begin
+						minv[j] <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
 						way[j] <= j0;
-						if ($signed(cur) < $signed(delta)) begin
-							delta <= cur;
+						if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(delta)) begin
+							delta <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
 							j1 <= j;
 						end
 					end else begin
@@ -155,9 +156,9 @@ module pattern_evaluation
 					if (j2 <= num_balls) begin
 						if (used[j2]) begin
 							u[p[j2]] <= $signed(u[p[j2]]) + $signed(delta);
-							v[j2] <= $signed(v[j]) - $signed(delta);
+							v[j2] <= $signed(v[j2]) - $signed(delta);
 						end else begin
-							minv[j] <= $signed(minv[j]) - $signed(delta);
+							minv[j2] <= $signed(minv[j2]) - $signed(delta);
 						end
 					end
 				end
@@ -174,13 +175,13 @@ module pattern_evaluation
 				i <= i + 1;
 			end
 			ANS: begin
-				for (integer j2 = 0; j2 <= 7; ++j2) begin
+				for (integer j2 = 1; j2 <= 7; ++j2) begin
 					if (j2 <= num_balls) begin
-						ans[p[j] - 1] <= j2 - 1;
+						ans[p[j2] - 1] <= j2 - 1;
 					end
 				end
 
-				//data_valid_out <= 1;
+				data_valid_out <= 1;
 				pattern_error <= -$signed(v[0]);
 				pattern_correct <= (-$signed(v[0]) < THRESHOLD) ? 1 : 0;
 			end
@@ -191,6 +192,71 @@ module pattern_evaluation
 		state <= next;
 	end
 
-	assign data_valid_out = (state == ANS);
+	logic [31:0] debug_ans0;
+	logic [31:0] debug_ans1;
+	logic [31:0] debug_ans2;
+	logic [31:0] debug_ans3;
+	logic [31:0] debug_ans4;
+	logic [31:0] debug_ans5;
+	logic [31:0] debug_ans6;
+	assign debug_ans0 = ans[0];
+	assign debug_ans1 = ans[1];
+	assign debug_ans2 = ans[2];
+	assign debug_ans3 = ans[3];
+	assign debug_ans4 = ans[4];
+	assign debug_ans5 = ans[5];
+	assign debug_ans6 = ans[6];
+
+	logic [31:0] debug_u0;
+	logic [31:0] debug_u1;
+	logic [31:0] debug_u2;
+	logic [31:0] debug_u3;
+	logic [31:0] debug_u4;
+	logic [31:0] debug_u5;
+	logic [31:0] debug_u6;
+	assign debug_u0 = u[0];
+	assign debug_u1 = u[1];
+	assign debug_u2 = u[2];
+	assign debug_u3 = u[3];
+	assign debug_u4 = u[4];
+	assign debug_u5 = u[5];
+	assign debug_u6 = u[6];
+
+
+	logic [31:0] debug_v0;
+	logic [31:0] debug_v1;
+	logic [31:0] debug_v2;
+	logic [31:0] debug_v3;
+	logic [31:0] debug_v4;
+	logic [31:0] debug_v5;
+	logic [31:0] debug_v6;
+	assign debug_v0 = v[0];
+	assign debug_v1 = v[1];
+	assign debug_v2 = v[2];
+	assign debug_v3 = v[3];
+	assign debug_v4 = v[4];
+	assign debug_v5 = v[5];
+	assign debug_v6 = v[6];
+
+	logic [32:1] debug_A11;
+	logic [32:1] debug_A12;
+	logic [32:1] debug_A13;
+	logic [32:1] debug_A21;
+	logic [32:1] debug_A22;
+	logic [32:1] debug_A23;
+	logic [32:1] debug_A31;
+	logic [32:1] debug_A32;
+	logic [32:1] debug_A33;
+	assign debug_A11 = A[1][1];
+	assign debug_A12 = A[1][2];
+	assign debug_A13 = A[1][3];
+	assign debug_A21 = A[2][1];
+	assign debug_A22 = A[2][2];
+	assign debug_A23 = A[2][3];
+	assign debug_A31 = A[3][1];
+	assign debug_A32 = A[3][2];
+	assign debug_A33 = A[3][3];
+
+
 endmodule
 `default_nettype wire
