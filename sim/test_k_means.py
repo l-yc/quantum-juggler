@@ -139,30 +139,30 @@ async def reset(rst, clk):
     rst.value = 0
     await ClockCycles(clk, 5)
 
-#@cocotb.test()
-#async def test_k_means_two_clusters(dut):
-#    """Cocotb test for the k_means module with two clusters"""
-#    await run_k_means_test(dut, k=2)
+@cocotb.test()
+async def test_k_means_two_clusters(dut):
+   """Cocotb test for the k_means module with two clusters"""
+   await run_k_means_test(dut, k=2)
 
 @cocotb.test()
 async def test_k_means_three_clusters(dut):
     """Cocotb test for the k_means module with three clusters"""
     await run_k_means_test(dut, k=3)
 
-#@cocotb.test()
-#async def test_k_means_four_clusters(dut):
-#    """Cocotb test for the k_means module with four clusters"""
-#    await run_k_means_test(dut, k=4)
-#
-#@cocotb.test()
-#async def test_k_means_five_clusters(dut):
-#    """Cocotb test for the k_means module with five clusters"""
-#    await run_k_means_test(dut, k=5)
-#
-#@cocotb.test()
-#async def test_k_means_six_clusters(dut):
-#    """Cocotb test for the k_means module with six clusters"""
-#    await run_k_means_test(dut, k=6)
+@cocotb.test()
+async def test_k_means_four_clusters(dut):
+   """Cocotb test for the k_means module with four clusters"""
+   await run_k_means_test(dut, k=4)
+
+@cocotb.test()
+async def test_k_means_five_clusters(dut):
+   """Cocotb test for the k_means module with five clusters"""
+   await run_k_means_test(dut, k=5)
+
+@cocotb.test()
+async def test_k_means_six_clusters(dut):
+   """Cocotb test for the k_means module with six clusters"""
+   await run_k_means_test(dut, k=6)
 
 # @cocotb.test()
 # async def test_k_means_seven_clusters(dut):

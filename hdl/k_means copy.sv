@@ -19,11 +19,9 @@ module k_means #(parameter MAX_ITER = 7) (
     localparam WIDTH = 320;
     localparam HEIGHT = 180;
     localparam BRAM_WIDTH = 64;
-    localparam SIXTH_BRAM_WIDTH = 11;
-    localparam THIRD_BRAM_WIDTH = 22;
-    localparam HALF_BRAM_WIDTH = 33;
-    localparam TWO_THIRD_BRAM_WIDTH = 44;
-    localparam FIVE_SIXTH_BRAM_WIDTH = 55;
+    localparam FOURTH_BRAM_WIDTH = 16;
+    localparam HALF_BRAM_WIDTH = 32;
+    localparam THREE_FOURTH_BRAM_WIDTH = 48;
 
     enum logic [1:0] {
         STORE = 0,
@@ -31,7 +29,7 @@ module k_means #(parameter MAX_ITER = 7) (
         DIVIDE = 2
     } state;
 
-    logic [3:0] update_state;
+    logic [2:0] update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -88,9 +86,9 @@ module k_means #(parameter MAX_ITER = 7) (
     // assign y_div_6 = y_div[5];
     // assign y_div_7 = y_div[6];
 
-    logic [23:0] x_sum_temp [SIXTH_BRAM_WIDTH-1:0][6:0];
-    logic [23:0] y_sum_temp [SIXTH_BRAM_WIDTH-1:0][6:0];
-    logic [23:0] total_mass_temp [SIXTH_BRAM_WIDTH-1:0][6:0];
+    logic [23:0] x_sum_temp [FOURTH_BRAM_WIDTH-1:0][6:0];
+    logic [23:0] y_sum_temp [FOURTH_BRAM_WIDTH-1:0][6:0];
+    logic [23:0] total_mass_temp [FOURTH_BRAM_WIDTH-1:0][6:0];
 
     logic [6:0] data_valid_out_x;
     logic [6:0] data_valid_out_y;
@@ -98,8 +96,8 @@ module k_means #(parameter MAX_ITER = 7) (
     logic [6:0] x_ready;
     logic [6:0] y_ready;
 
-    logic [6:0][8:0] centroid_distance [SIXTH_BRAM_WIDTH-1:0];
-    logic [2:0] index [SIXTH_BRAM_WIDTH-1:0];
+    logic [6:0][8:0] centroid_distance [FOURTH_BRAM_WIDTH-1:0];
+    logic [2:0] index [FOURTH_BRAM_WIDTH-1:0];
     
     logic [6:0] current_iteration;
 
@@ -180,7 +178,7 @@ module k_means #(parameter MAX_ITER = 7) (
     // Combinational minimum module
     generate
         genvar m;
-        for (m=0; m<SIXTH_BRAM_WIDTH; m=m+1) begin
+        for (m=0; m<FOURTH_BRAM_WIDTH; m=m+1) begin
             minimum min(
                 .vals_in(centroid_distance[m]),
                 .max(num_balls),
@@ -206,7 +204,7 @@ module k_means #(parameter MAX_ITER = 7) (
                         total_mass_temp[0][j] = 0;
                     end
                 end
-                for (int i=1; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                for (int i=1; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                     for (int j=0; j<7; j=j+1) begin
                         if (bram_data_out[x_read>>6][i] == 1'b1 && j == index[i]) begin
                             // There is a mask at this (x,y)
@@ -224,9 +222,9 @@ module k_means #(parameter MAX_ITER = 7) (
             end
             2: begin
                 for (int j=0; j<7; j=j+1) begin
-                    if (bram_data_out[x_read>>6][SIXTH_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
+                    if (bram_data_out[x_read>>6][FOURTH_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
                         // There is a mask at this (x,y)
-                        x_sum_temp[0][j] = x_read + SIXTH_BRAM_WIDTH;
+                        x_sum_temp[0][j] = x_read + FOURTH_BRAM_WIDTH;
                         y_sum_temp[0][j] = y_read;
                         total_mass_temp[0][j] = 1;
                     end else begin
@@ -236,11 +234,11 @@ module k_means #(parameter MAX_ITER = 7) (
                         total_mass_temp[0][j] = 0;
                     end
                 end
-                for (int i=1; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                for (int i=1; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                     for (int j=0; j<7; j=j+1) begin
-                        if (bram_data_out[x_read>>6][i+SIXTH_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
+                        if (bram_data_out[x_read>>6][i+FOURTH_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
                             // There is a mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + SIXTH_BRAM_WIDTH + i;
+                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + FOURTH_BRAM_WIDTH + i;
                             y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
                             total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
                         end else begin
@@ -254,36 +252,6 @@ module k_means #(parameter MAX_ITER = 7) (
             end
             3: begin
                 for (int j=0; j<7; j=j+1) begin
-                    if (bram_data_out[x_read>>6][THIRD_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
-                        // There is a mask at this (x,y)
-                        x_sum_temp[0][j] = x_read + THIRD_BRAM_WIDTH;
-                        y_sum_temp[0][j] = y_read;
-                        total_mass_temp[0][j] = 1;
-                    end else begin
-                        // There is no mask at this (x,y)
-                        x_sum_temp[0][j] = 0;
-                        y_sum_temp[0][j] = 0;
-                        total_mass_temp[0][j] = 0;
-                    end
-                end
-                for (int i=1; i<SIXTH_BRAM_WIDTH; i=i+1) begin
-                    for (int j=0; j<7; j=j+1) begin
-                        if (bram_data_out[x_read>>6][i+THIRD_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
-                            // There is a mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + THIRD_BRAM_WIDTH + i;
-                            y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
-                            total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
-                        end else begin
-                            // There is no mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j];
-                            y_sum_temp[i][j] = y_sum_temp[i-1][j];
-                            total_mass_temp[i][j] = total_mass_temp[i-1][j];
-                        end
-                    end
-                end
-            end
-            4: begin
-                for (int j=0; j<7; j=j+1) begin
                     if (bram_data_out[x_read>>6][HALF_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
                         // There is a mask at this (x,y)
                         x_sum_temp[0][j] = x_read + HALF_BRAM_WIDTH;
@@ -296,7 +264,7 @@ module k_means #(parameter MAX_ITER = 7) (
                         total_mass_temp[0][j] = 0;
                     end
                 end
-                for (int i=1; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                for (int i=1; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                     for (int j=0; j<7; j=j+1) begin
                         if (bram_data_out[x_read>>6][i+HALF_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
                             // There is a mask at this (x,y)
@@ -312,11 +280,11 @@ module k_means #(parameter MAX_ITER = 7) (
                     end
                 end
             end
-            5: begin
+            4: begin
                 for (int j=0; j<7; j=j+1) begin
-                    if (bram_data_out[x_read>>6][TWO_THIRD_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
+                    if (bram_data_out[x_read>>6][THREE_FOURTH_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
                         // There is a mask at this (x,y)
-                        x_sum_temp[0][j] = x_read + TWO_THIRD_BRAM_WIDTH;
+                        x_sum_temp[0][j] = x_read + THREE_FOURTH_BRAM_WIDTH;
                         y_sum_temp[0][j] = y_read;
                         total_mass_temp[0][j] = 1;
                     end else begin
@@ -326,41 +294,11 @@ module k_means #(parameter MAX_ITER = 7) (
                         total_mass_temp[0][j] = 0;
                     end
                 end
-                for (int i=1; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                for (int i=1; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                     for (int j=0; j<7; j=j+1) begin
-                        if (bram_data_out[x_read>>6][i+TWO_THIRD_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
+                        if (bram_data_out[x_read>>6][i+THREE_FOURTH_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
                             // There is a mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + TWO_THIRD_BRAM_WIDTH + i;
-                            y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
-                            total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
-                        end else begin
-                            // There is no mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j];
-                            y_sum_temp[i][j] = y_sum_temp[i-1][j];
-                            total_mass_temp[i][j] = total_mass_temp[i-1][j];
-                        end
-                    end
-                end
-            end
-            6: begin
-                for (int j=0; j<7; j=j+1) begin
-                    if (bram_data_out[x_read>>6][FIVE_SIXTH_BRAM_WIDTH] == 1'b1 && j == index[0]) begin
-                        // There is a mask at this (x,y)
-                        x_sum_temp[0][j] = x_read + FIVE_SIXTH_BRAM_WIDTH;
-                        y_sum_temp[0][j] = y_read;
-                        total_mass_temp[0][j] = 1;
-                    end else begin
-                        // There is no mask at this (x,y)
-                        x_sum_temp[0][j] = 0;
-                        y_sum_temp[0][j] = 0;
-                        total_mass_temp[0][j] = 0;
-                    end
-                end
-                for (int i=1; i<SIXTH_BRAM_WIDTH-2; i=i+1) begin
-                    for (int j=0; j<7; j=j+1) begin
-                        if (bram_data_out[x_read>>6][i+FIVE_SIXTH_BRAM_WIDTH] == 1'b1 && j == index[i]) begin
-                            // There is a mask at this (x,y)
-                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + FIVE_SIXTH_BRAM_WIDTH + i;
+                            x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + THREE_FOURTH_BRAM_WIDTH + i;
                             y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
                             total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
                         end else begin
@@ -373,7 +311,7 @@ module k_means #(parameter MAX_ITER = 7) (
                 end
             end
             default: begin
-                for (int i=0; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                for (int i=0; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                     for (int j=0; j<7; j=j+1) begin
                         x_sum_temp[i][j] <= 0;
                         y_sum_temp[i][j] <= 0;
@@ -437,7 +375,7 @@ module k_means #(parameter MAX_ITER = 7) (
                     case (update_state) 
                         0: begin
                             update_state <= 1;
-                            for (int i=0; i<SIXTH_BRAM_WIDTH; i=i+1) begin
+                            for (int i=0; i<FOURTH_BRAM_WIDTH; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     centroid_distance[i][j] <= (
                                         ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
@@ -447,39 +385,23 @@ module k_means #(parameter MAX_ITER = 7) (
                             end
                         end
                         1: begin
-                            for (int i=SIXTH_BRAM_WIDTH; i<THIRD_BRAM_WIDTH; i=i+1) begin
+                            for (int i=FOURTH_BRAM_WIDTH; i<HALF_BRAM_WIDTH; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i-SIXTH_BRAM_WIDTH][j] <= (
+                                    centroid_distance[i-FOURTH_BRAM_WIDTH][j] <= (
                                         ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
                                         ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
                                     );
                                 end
                             end
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
+                                x_sum[i] <= x_sum_temp[FOURTH_BRAM_WIDTH-1][i] + x_sum[i];
+                                y_sum[i] <= y_sum_temp[FOURTH_BRAM_WIDTH-1][i] + y_sum[i];
+                                total_mass[i] <= total_mass_temp[FOURTH_BRAM_WIDTH-1][i] + total_mass[i];
                             end
                             update_state <= 2;
                         end
                         2: begin
-                            for (int i=THIRD_BRAM_WIDTH; i<HALF_BRAM_WIDTH; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i-THIRD_BRAM_WIDTH][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
-                            end
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
-                            end
-                            update_state <= 3;
-                        end
-                        3: begin
-                            for (int i=HALF_BRAM_WIDTH; i<TWO_THIRD_BRAM_WIDTH; i=i+1) begin
+                            for (int i=HALF_BRAM_WIDTH; i<THREE_FOURTH_BRAM_WIDTH; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     centroid_distance[i-HALF_BRAM_WIDTH][j] <= (
                                         ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
@@ -488,49 +410,33 @@ module k_means #(parameter MAX_ITER = 7) (
                                 end
                             end
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
+                                x_sum[i] <= x_sum_temp[FOURTH_BRAM_WIDTH-1][i] + x_sum[i];
+                                y_sum[i] <= y_sum_temp[FOURTH_BRAM_WIDTH-1][i] + y_sum[i];
+                                total_mass[i] <= total_mass_temp[FOURTH_BRAM_WIDTH-1][i] + total_mass[i];
+                            end
+                            update_state <= 3;
+                        end
+                        3: begin
+                            for (int i=THREE_FOURTH_BRAM_WIDTH; i<BRAM_WIDTH; i=i+1) begin
+                                for (int j=0; j<7; j=j+1) begin
+                                    centroid_distance[i-THREE_FOURTH_BRAM_WIDTH][j] <= (
+                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
+                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
+                                    );
+                                end
+                            end
+                            for (int i=0; i<7; i=i+1) begin
+                                x_sum[i] <= x_sum_temp[FOURTH_BRAM_WIDTH-1][i] + x_sum[i];
+                                y_sum[i] <= y_sum_temp[FOURTH_BRAM_WIDTH-1][i] + y_sum[i];
+                                total_mass[i] <= total_mass_temp[FOURTH_BRAM_WIDTH-1][i] + total_mass[i];
                             end
                             update_state <= 4;
                         end
                         4: begin
-                            for (int i=TWO_THIRD_BRAM_WIDTH; i<FIVE_SIXTH_BRAM_WIDTH; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i-TWO_THIRD_BRAM_WIDTH][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
-                            end
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
-                            end
-                            update_state <= 5;
-                        end
-                        5: begin
-                            for (int i=FIVE_SIXTH_BRAM_WIDTH; i<BRAM_WIDTH; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i-FIVE_SIXTH_BRAM_WIDTH][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
-                            end
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
-                            end
-                            update_state <= 6;
-                        end
-                        6: begin
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[SIXTH_BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[SIXTH_BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[SIXTH_BRAM_WIDTH-1][i] + total_mass[i];
+                                x_sum[i] <= x_sum_temp[FOURTH_BRAM_WIDTH-1][i] + x_sum[i];
+                                y_sum[i] <= y_sum_temp[FOURTH_BRAM_WIDTH-1][i] + y_sum[i];
+                                total_mass[i] <= total_mass_temp[FOURTH_BRAM_WIDTH-1][i] + total_mass[i];
                             end
                             update_state <= 0;
                             if (x_read == 256) begin
