@@ -26,7 +26,7 @@ module k_means #(parameter MAX_ITER = 15) (
         DIVIDE = 2
     } state;
 
-    logic update_state;
+    logic [1:0] update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -94,7 +94,6 @@ module k_means #(parameter MAX_ITER = 15) (
     logic [6:0] y_ready;
 
     logic [6:0][8:0] centroid_distance [63:0];
-    logic [2:0] index [63:0];
     
     logic [6:0] current_iteration;
 
@@ -173,21 +172,24 @@ module k_means #(parameter MAX_ITER = 15) (
     end
 
     // Combinational minimum module
+    logic [2:0] min_index [63:0];
+    logic [2:0] min_index_calc [63:0];
     generate
         genvar j;
         for (j=0; j<64; j=j+1) begin
             minimum min(
                 .vals_in(centroid_distance[j]),
                 .max(num_balls),
-                .minimum_index(index[j])
+                .minimum_index(min_index_calc[j])
             );
         end
     endgenerate
  
     // Sum up all the values 
+    // TODO: maybe I can optimize how it sums to cut down latency in half
     always_comb begin
         for (int j=0; j<7; j=j+1) begin
-            if (bram_data_out[x_read>>6][0] == 1'b1 && j == index[0]) begin
+            if (bram_data_out[x_read>>6][0] == 1'b1 && j == min_index[0]) begin
                 // There is a mask at this (x,y)
                 x_sum_temp[0][j] = x_read;
                 y_sum_temp[0][j] = y_read;
@@ -201,7 +203,7 @@ module k_means #(parameter MAX_ITER = 15) (
         end
         for (int i=1; i<BRAM_WIDTH; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
-                if (bram_data_out[x_read>>6][i] == 1'b1 && j == index[i]) begin
+                if (bram_data_out[x_read>>6][i] == 1'b1 && j == min_index[i]) begin
                     // There is a mask at this (x,y)
                     x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + i;
                     y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
@@ -279,6 +281,12 @@ module k_means #(parameter MAX_ITER = 15) (
                             end
                         end
                         1: begin
+                            update_state <= 2;
+                            for (int i=0; i<BRAM_WIDTH; i=i+1) begin
+                                min_index[i] <= min_index_calc[i];
+                            end
+                        end
+                        2: begin
                             for (int i=0; i<7; i=i+1) begin
                                 x_sum[i] <= x_sum_temp[BRAM_WIDTH-1][i] + x_sum[i];
                                 y_sum[i] <= y_sum_temp[BRAM_WIDTH-1][i] + y_sum[i];
