@@ -182,31 +182,31 @@ module k_means #(parameter MAX_ITER = 9) (
  
     // Sum up all the values 
     logic [14:0] x_sum_comb_1_0 [63:0][6:0];
-    logic [14:0] y_sum_comb_1_0 [63:0][6:0];
+    logic [5:0] y_sum_comb_1_0 [63:0][6:0];
     logic [5:0] total_mass_comb_1_0 [63:0][6:0];
     logic [14:0] x_sum_comb_1_1 [31:0][6:0];
-    logic [14:0] y_sum_comb_1_1 [31:0][6:0];
+    logic [5:0] y_sum_comb_1_1 [31:0][6:0];
     logic [5:0] total_mass_comb_1_1 [31:0][6:0];
     logic [14:0] x_sum_temp_1 [31:0][6:0];
-    logic [14:0] y_sum_temp_1 [31:0][6:0];
+    logic [5:0] y_sum_temp_1 [31:0][6:0];
     logic [5:0] total_mass_temp_1 [31:0][6:0];
     logic [14:0] x_sum_comb_2_0 [15:0][6:0];
-    logic [14:0] y_sum_comb_2_0 [15:0][6:0];
+    logic [5:0] y_sum_comb_2_0 [15:0][6:0];
     logic [5:0] total_mass_comb_2_0 [15:0][6:0];
     logic [14:0] x_sum_comb_2_1 [7:0][6:0];
-    logic [14:0] y_sum_comb_2_1 [7:0][6:0];
+    logic [5:0] y_sum_comb_2_1 [7:0][6:0];
     logic [5:0] total_mass_comb_2_1 [7:0][6:0];
     logic [14:0] x_sum_temp_2 [7:0][6:0];
-    logic [14:0] y_sum_temp_2 [7:0][6:0];
+    logic [5:0] y_sum_temp_2 [7:0][6:0];
     logic [5:0] total_mass_temp_2 [7:0][6:0];
     logic [14:0] x_sum_comb_3_0 [3:0][6:0];
-    logic [14:0] y_sum_comb_3_0 [3:0][6:0];
+    logic [5:0] y_sum_comb_3_0 [3:0][6:0];
     logic [5:0] total_mass_comb_3_0 [3:0][6:0];
     logic [14:0] x_sum_comb_3_1 [1:0][6:0];
-    logic [14:0] y_sum_comb_3_1 [1:0][6:0];
+    logic [5:0] y_sum_comb_3_1 [1:0][6:0];
     logic [5:0] total_mass_comb_3_1 [1:0][6:0];
     logic [14:0] x_sum_comb_3_2 [6:0];
-    logic [14:0] y_sum_comb_3_2 [6:0];
+    logic [5:0] y_sum_comb_3_2 [6:0];
     logic [5:0] total_mass_comb_3_2 [6:0];
 
     always_comb begin
@@ -216,7 +216,7 @@ module k_means #(parameter MAX_ITER = 9) (
                 if (bram_data_out[x_read>>6][i] == 1'b1 && j == min_index[i]) begin
                     // There is a mask at this (x,y)
                     x_sum_comb_1_0[i][j] = x_read + i;
-                    y_sum_comb_1_0[i][j] = y_read;
+                    y_sum_comb_1_0[i][j] = 1;
                     total_mass_comb_1_0[i][j] = 1;
                 end else begin
                     // There is no mask at this (x,y)
@@ -352,7 +352,7 @@ module k_means #(parameter MAX_ITER = 9) (
                         5: begin
                             for (int i=0; i<7; i=i+1) begin
                                 x_sum[i] <= x_sum_comb_3_2[i] + x_sum[i];
-                                y_sum[i] <= y_sum_comb_3_2[i] + y_sum[i];
+                                y_sum[i] <= y_sum_comb_3_2[i] * y_read + y_sum[i];
                                 total_mass[i] <= total_mass_comb_3_2[i] + total_mass[i];
                             end
                             if (x_read == 256) begin
