@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 15) (
+module k_means #(parameter MAX_ITER = 10) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
@@ -26,7 +26,7 @@ module k_means #(parameter MAX_ITER = 15) (
         DIVIDE = 2
     } state;
 
-    logic [1:0] update_state;
+    logic [2:0] update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -82,10 +82,6 @@ module k_means #(parameter MAX_ITER = 15) (
     assign y_div_5 = y_div[4];
     assign y_div_6 = y_div[5];
     assign y_div_7 = y_div[6];
-
-    logic [23:0] x_sum_temp [BRAM_WIDTH-1:0][6:0];
-    logic [23:0] y_sum_temp [BRAM_WIDTH-1:0][6:0];
-    logic [23:0] total_mass_temp [BRAM_WIDTH-1:0][6:0];
 
     logic [6:0] data_valid_out_x;
     logic [6:0] data_valid_out_y;
@@ -171,13 +167,14 @@ module k_means #(parameter MAX_ITER = 15) (
         end
     end
 
-    // Combinational minimum module
-    logic [2:0] min_index [63:0];
-    logic [2:0] min_index_calc [63:0];
+    // Minimum module
+    logic [2:0] min_index [BRAM_WIDTH-1:0];
+    logic [2:0] min_index_calc [BRAM_WIDTH-1:0];
     generate
         genvar j;
         for (j=0; j<64; j=j+1) begin
             minimum min(
+                .clk_in(clk_in),
                 .vals_in(centroid_distance[j]),
                 .max(num_balls),
                 .minimum_index(min_index_calc[j])
@@ -186,33 +183,53 @@ module k_means #(parameter MAX_ITER = 15) (
     endgenerate
  
     // Sum up all the values 
-    // TODO: maybe I can optimize how it sums to cut down latency in half
+    logic [14:0] x_sum_comb_1 [$clog2(BRAM_WIDTH)/2-1:0][BRAM_WIDTH-1:0][6:0];
+    logic [14:0] y_sum_comb_1 [$clog2(BRAM_WIDTH)/2-1:0][BRAM_WIDTH-1:0][6:0];
+    logic [5:0] total_mass_comb_1 [$clog2(BRAM_WIDTH)/2-1:0][BRAM_WIDTH-1:0][6:0];
+    logic [14:0] x_sum_comb_2 [$clog2(BRAM_WIDTH)/2:0][7:0][6:0];
+    logic [14:0] y_sum_comb_2 [$clog2(BRAM_WIDTH)/2:0][7:0][6:0];
+    logic [5:0] total_mass_comb_2 [$clog2(BRAM_WIDTH)/2:0][7:0][6:0];
+    logic [14:0] x_sum_temp [15:0][6:0];
+    logic [14:0] y_sum_temp [15:0][6:0];
+    logic [5:0] total_mass_temp [15:0][6:0];
     always_comb begin
-        for (int j=0; j<7; j=j+1) begin
-            if (bram_data_out[x_read>>6][0] == 1'b1 && j == min_index[0]) begin
-                // There is a mask at this (x,y)
-                x_sum_temp[0][j] = x_read;
-                y_sum_temp[0][j] = y_read;
-                total_mass_temp[0][j] = 1;
-            end else begin
-                // There is no mask at this (x,y)
-                x_sum_temp[0][j] = 0;
-                y_sum_temp[0][j] = 0;
-                total_mass_temp[0][j] = 0;
-            end
-        end
-        for (int i=1; i<BRAM_WIDTH; i=i+1) begin
+        for (int i=0; i<BRAM_WIDTH; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
                 if (bram_data_out[x_read>>6][i] == 1'b1 && j == min_index[i]) begin
                     // There is a mask at this (x,y)
-                    x_sum_temp[i][j] = x_sum_temp[i-1][j] + x_read + i;
-                    y_sum_temp[i][j] = y_sum_temp[i-1][j] + y_read;
-                    total_mass_temp[i][j] = total_mass_temp[i-1][j] + 1;
+                    x_sum_comb_1[0][i][j] = x_read + i;
+                    y_sum_comb_1[0][i][j] = y_read;
+                    total_mass_comb_1[0][i][j] = 1;
                 end else begin
                     // There is no mask at this (x,y)
-                    x_sum_temp[i][j] = x_sum_temp[i-1][j];
-                    y_sum_temp[i][j] = y_sum_temp[i-1][j];
-                    total_mass_temp[i][j] = total_mass_temp[i-1][j];
+                    x_sum_comb_1[0][i][j] = 0;
+                    y_sum_comb_1[0][i][j] = 0;
+                    total_mass_comb_1[0][i][j] = 0;
+                end
+            end
+        end
+        for (int t=0; t<$clog2(BRAM_WIDTH)/2-1; t=t+1) begin
+            for (int i=0; i<2**($clog2(BRAM_WIDTH)-t-1); i=i+1) begin
+                for (int j=0; j<7; j=j+1) begin
+                    x_sum_comb_1[t+1][i][j] = x_sum_comb_1[t][2*i][j] + x_sum_comb_1[t][2*i+1][j];
+                    y_sum_comb_1[t+1][i][j] = y_sum_comb_1[t][2*i][j] + y_sum_comb_1[t][2*i+1][j];
+                    total_mass_comb_1[t+1][i][j] = total_mass_comb_1[t][2*i][j] + total_mass_comb_1[t][2*i+1][j];
+                end
+            end
+        end
+        for (int i=0; i<8; i=i+1) begin
+            for (int j=0; j<7; j=j+1) begin
+                x_sum_comb_2[0][i][j] = x_sum_temp[2*i][j] + x_sum_temp[2*i+1][j];
+                y_sum_comb_2[0][i][j] = y_sum_temp[2*i][j] + y_sum_temp[2*i+1][j];
+                total_mass_comb_2[0][i][j] = total_mass_temp[2*i][j] + total_mass_temp[2*i+1][j];
+            end
+        end
+        for (int t=0; t<$clog2(BRAM_WIDTH)/2; t=t+1) begin
+            for (int i=0; i<2**(2-t); i=i+1) begin
+                for (int j=0; j<7; j=j+1) begin
+                    x_sum_comb_2[t+1][i][j] = x_sum_comb_2[t][2*i][j] + x_sum_comb_2[t][2*i+1][j];
+                    y_sum_comb_2[t+1][i][j] = y_sum_comb_2[t][2*i][j] + y_sum_comb_2[t][2*i+1][j];
+                    total_mass_comb_2[t+1][i][j] = total_mass_comb_2[t][2*i][j] + total_mass_comb_2[t][2*i+1][j];
                 end
             end
         end
@@ -257,20 +274,22 @@ module k_means #(parameter MAX_ITER = 15) (
                     end
                 end
                 UPDATE: begin
-                    // Finds x_sum, y_sum, total_mass for divide, should do 30x update->div->up->div...
-
-                    // 0: ask bram to read row y_read
-                    // 1: wait a cycle
-                    // 2: read off current_row & calculate argmin for each pixel in row and update x_sum and y_sum
                     write_enable <= 0;
                     if (y_read == HEIGHT) begin
                         state <= DIVIDE;
                         div_ready <= 1;
                     end
 
+                    // Cycle update state
+                    update_state <= update_state == 3 ? 0 : update_state + 1;
+
+                    // TODO: probably remove after minimum is pipelined
+                    for (int i=0; i<BRAM_WIDTH; i=i+1) begin
+                        min_index[i] <= min_index_calc[i];
+                    end
+
                     case (update_state) 
                         0: begin
-                            update_state <= 1;
                             for (int i=0; i<BRAM_WIDTH; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     centroid_distance[i][j] <= (
@@ -280,19 +299,21 @@ module k_means #(parameter MAX_ITER = 15) (
                                 end
                             end
                         end
-                        1: begin
-                            update_state <= 2;
-                            for (int i=0; i<BRAM_WIDTH; i=i+1) begin
-                                min_index[i] <= min_index_calc[i];
+                        2: begin
+                            for (int i=0; i<16; i=i+1) begin
+                                for (int j=0; j<7; j=j+1) begin
+                                    x_sum_temp[i][j] <= x_sum_comb_1[$clog2(BRAM_WIDTH)/2-1][i][j];
+                                    y_sum_temp[i][j] <= y_sum_comb_1[$clog2(BRAM_WIDTH)/2-1][i][j];
+                                    total_mass_temp[i][j] <= total_mass_comb_1[$clog2(BRAM_WIDTH)/2-1][i][j];
+                                end
                             end
                         end
-                        2: begin
+                        3: begin
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_temp[BRAM_WIDTH-1][i] + x_sum[i];
-                                y_sum[i] <= y_sum_temp[BRAM_WIDTH-1][i] + y_sum[i];
-                                total_mass[i] <= total_mass_temp[BRAM_WIDTH-1][i] + total_mass[i];
+                                x_sum[i] <= x_sum_comb_2[$clog2(BRAM_WIDTH)/2][0][i] + x_sum[i];
+                                y_sum[i] <= y_sum_comb_2[$clog2(BRAM_WIDTH)/2][0][i] + y_sum[i];
+                                total_mass[i] <= total_mass_comb_2[$clog2(BRAM_WIDTH)/2][0][i] + total_mass[i];
                             end
-                            update_state <= 0;
                             if (x_read == 256) begin
                                 x_read <= 0;
                                 y_read <= y_read + 1;
@@ -301,9 +322,6 @@ module k_means #(parameter MAX_ITER = 15) (
                             end
                         end
                         default: begin
-                            update_state <= 2'b00;
-                            x_read <= 0;
-                            y_read <= 0;
                         end
                     endcase           
                 end

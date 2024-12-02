@@ -2,13 +2,9 @@ import cocotb
 import os
 import sys
 import numpy as np
-from math import log
-import logging
 from pathlib import Path
-from random import randint, gauss
 from cocotb.clock import Clock
-from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnly, with_timeout
-from cocotb.utils import get_sim_time as gst
+from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge, ReadOnly, with_timeout
 from cocotb.runner import get_runner
 
 async def reset(rst, clk):
