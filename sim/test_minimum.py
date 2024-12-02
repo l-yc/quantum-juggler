@@ -13,10 +13,10 @@ from cocotb.runner import get_runner
 @cocotb.test()
 async def test_1(dut):
     dut._log.info("Starting test 1")
-    dut.vals_in.value = [2, 3, 1, 2, 1, 5, 2]
+    dut.vals_in.value = [2, 3, 1, 2, 2, 5, 2]
     dut.max.value = 5
     await Timer(1, units="ns")
-    assert dut.minimum_index.value == 2
+    assert dut.minimum_index.value == 4
     await Timer(1, units="ns")
 
 @cocotb.test()
@@ -42,6 +42,15 @@ async def test_4(dut):
     dut._log.info("Starting test 4")
     dut.vals_in.value = [2, 3, 1, 4, 5, 3, 6]
     dut.max.value = 4
+    await Timer(1, units="ns")
+    assert dut.minimum_index.value == 1
+    await Timer(1, units="ns")
+
+@cocotb.test()
+async def test_5(dut):
+    dut._log.info("Starting test 5")
+    dut.vals_in.value = [12, 10, 8, 2, 15, 11, 50]
+    dut.max.value = 3
     await Timer(1, units="ns")
     assert dut.minimum_index.value == 1
     await Timer(1, units="ns")
