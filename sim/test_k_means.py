@@ -205,6 +205,9 @@ async def run_k_means_test(dut, k):
 
     # Wait for output to become valid
     while not dut.data_valid_out.value:
+        dut._log.info(f"x_read: {dut.x_read.value}")
+        dut._log.info(f"y_read: {dut.y_read.value}")
+        dut._log.info(f"current_iteration: {dut.current_iteration.value}")
         await RisingEdge(dut.clk_in)
 
     # Capture output centroids
