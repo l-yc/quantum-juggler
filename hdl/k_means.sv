@@ -170,13 +170,13 @@ module k_means #(parameter MAX_ITER = 9) (
     endgenerate
  
     // Sum up all the values 
-    logic [14:0] x_sum_comb_1 [31:0][6:0];
+    logic [10:0] x_sum_comb_1 [31:0][6:0];
     logic [5:0] total_mass_comb_1 [31:0][6:0];
-    logic [14:0] x_sum_comb_3_1 [3:0][6:0];
+    logic [10:0] x_sum_comb_3_1 [3:0][6:0];
     logic [5:0] total_mass_comb_3_1 [3:0][6:0];
-    logic [14:0] x_sum_comb_3_2 [1:0][6:0];
+    logic [10:0] x_sum_comb_3_2 [1:0][6:0];
     logic [5:0] total_mass_comb_3_2 [1:0][6:0];
-    logic [14:0] x_sum_comb_3_3 [6:0];
+    logic [10:0] x_sum_comb_3_3 [6:0];
     logic [5:0] total_mass_comb_3_3 [6:0];
 
     always_comb begin
@@ -261,8 +261,8 @@ module k_means #(parameter MAX_ITER = 9) (
                             for (int i=0; i<32; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     x_sum_comb_1[i][j] <= (
-                                        ((bram_data_out[x_read>>6][2*i] == 1'b1 && j == min_index[2*i]) ? x_read + 2*i : 0) + 
-                                        ((bram_data_out[x_read>>6][2*i+1] == 1'b1 && j == min_index[2*i+1]) ? x_read + 2*i+1 : 0)
+                                        ((bram_data_out[x_read>>6][2*i] == 1'b1 && j == min_index[2*i]) ? 2*i : 0) + 
+                                        ((bram_data_out[x_read>>6][2*i+1] == 1'b1 && j == min_index[2*i+1]) ? 2*i+1 : 0)
                                     );
                                     total_mass_comb_1[i][j] <= (
                                         (bram_data_out[x_read>>6][2*i] && j == min_index[2*i]) + 
@@ -291,7 +291,7 @@ module k_means #(parameter MAX_ITER = 9) (
                         end
                         6: begin
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_3_3[i] + x_sum[i];
+                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
                                 y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
                                 total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
                             end
