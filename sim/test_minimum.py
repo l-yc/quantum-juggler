@@ -13,47 +13,52 @@ from cocotb.runner import get_runner
 @cocotb.test()
 async def test_1(dut):
     dut._log.info("Starting test 1")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.vals_in.value = [2, 3, 1, 2, 2, 5, 2]
     dut.max.value = 5
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
     assert dut.minimum_index.value == 4
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
 
 @cocotb.test()
 async def test_2(dut):
     dut._log.info("Starting test 2")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.vals_in.value = [2, 3, 1, 2, 5, 2, 1]
     dut.max.value = 2
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
     assert dut.minimum_index.value == 0
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
 
 @cocotb.test()
 async def test_3(dut):
     dut._log.info("Starting test 3")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.vals_in.value = [2, 3, 1, 2, 5, 3, 6]
     dut.max.value = 6
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
     assert dut.minimum_index.value == 4
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
 
 @cocotb.test()
 async def test_4(dut):
     dut._log.info("Starting test 4")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.vals_in.value = [2, 3, 1, 4, 5, 3, 6]
     dut.max.value = 4
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
     assert dut.minimum_index.value == 1
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
 
 @cocotb.test()
 async def test_5(dut):
     dut._log.info("Starting test 5")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.vals_in.value = [12, 10, 8, 2, 15, 11, 50]
     dut.max.value = 3
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
     assert dut.minimum_index.value == 1
-    await Timer(1, units="ns")
+    await Timer(30, units="ns")
 
 def is_runner():
     """Run the TMDS runner. Boilerplate code"""

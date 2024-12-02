@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 10) (
+module k_means #(parameter MAX_ITER = 9) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
@@ -41,47 +41,47 @@ module k_means #(parameter MAX_ITER = 10) (
     logic [23:0] x_div [6:0];
     logic [23:0] y_div [6:0];
 
-    // for debugging in gtkwave
-    logic [23:0] x_sum_1, x_sum_2, x_sum_3, x_sum_4, x_sum_5, x_sum_6, x_sum_7;
-    logic [23:0] y_sum_1, y_sum_2, y_sum_3, y_sum_4, y_sum_5, y_sum_6, y_sum_7;
-    logic [23:0] total_mass_1, total_mass_2, total_mass_3, total_mass_4, total_mass_5, total_mass_6, total_mass_7;
-    logic [23:0] x_div_1, x_div_2, x_div_3, x_div_4, x_div_5, x_div_6, x_div_7;
-    logic [23:0] y_div_1, y_div_2, y_div_3, y_div_4, y_div_5, y_div_6, y_div_7;
-    assign x_sum_1 = x_sum[0];
-    assign x_sum_2 = x_sum[1];
-    assign x_sum_3 = x_sum[2];
-    assign x_sum_4 = x_sum[3];
-    assign x_sum_5 = x_sum[4];
-    assign x_sum_6 = x_sum[5];
-    assign x_sum_7 = x_sum[6];
-    assign y_sum_1 = y_sum[0];
-    assign y_sum_2 = y_sum[1];
-    assign y_sum_3 = y_sum[2];
-    assign y_sum_4 = y_sum[3];
-    assign y_sum_5 = y_sum[4];
-    assign y_sum_6 = y_sum[5];
-    assign y_sum_7 = y_sum[6];
-    assign total_mass_1 = total_mass[0];
-    assign total_mass_2 = total_mass[1];
-    assign total_mass_3 = total_mass[2];
-    assign total_mass_4 = total_mass[3];
-    assign total_mass_5 = total_mass[4];
-    assign total_mass_6 = total_mass[5];
-    assign total_mass_7 = total_mass[6];
-    assign x_div_1 = x_div[0];
-    assign x_div_2 = x_div[1];
-    assign x_div_3 = x_div[2];
-    assign x_div_4 = x_div[3];
-    assign x_div_5 = x_div[4];
-    assign x_div_6 = x_div[5];
-    assign x_div_7 = x_div[6];
-    assign y_div_1 = y_div[0];
-    assign y_div_2 = y_div[1];
-    assign y_div_3 = y_div[2];
-    assign y_div_4 = y_div[3];
-    assign y_div_5 = y_div[4];
-    assign y_div_6 = y_div[5];
-    assign y_div_7 = y_div[6];
+    //// for debugging in gtkwave
+    //logic [23:0] x_sum_1, x_sum_2, x_sum_3, x_sum_4, x_sum_5, x_sum_6, x_sum_7;
+    //logic [23:0] y_sum_1, y_sum_2, y_sum_3, y_sum_4, y_sum_5, y_sum_6, y_sum_7;
+    //logic [23:0] total_mass_1, total_mass_2, total_mass_3, total_mass_4, total_mass_5, total_mass_6, total_mass_7;
+    //logic [23:0] x_div_1, x_div_2, x_div_3, x_div_4, x_div_5, x_div_6, x_div_7;
+    //logic [23:0] y_div_1, y_div_2, y_div_3, y_div_4, y_div_5, y_div_6, y_div_7;
+    //assign x_sum_1 = x_sum[0];
+    //assign x_sum_2 = x_sum[1];
+    //assign x_sum_3 = x_sum[2];
+    //assign x_sum_4 = x_sum[3];
+    //assign x_sum_5 = x_sum[4];
+    //assign x_sum_6 = x_sum[5];
+    //assign x_sum_7 = x_sum[6];
+    //assign y_sum_1 = y_sum[0];
+    //assign y_sum_2 = y_sum[1];
+    //assign y_sum_3 = y_sum[2];
+    //assign y_sum_4 = y_sum[3];
+    //assign y_sum_5 = y_sum[4];
+    //assign y_sum_6 = y_sum[5];
+    //assign y_sum_7 = y_sum[6];
+    //assign total_mass_1 = total_mass[0];
+    //assign total_mass_2 = total_mass[1];
+    //assign total_mass_3 = total_mass[2];
+    //assign total_mass_4 = total_mass[3];
+    //assign total_mass_5 = total_mass[4];
+    //assign total_mass_6 = total_mass[5];
+    //assign total_mass_7 = total_mass[6];
+    //assign x_div_1 = x_div[0];
+    //assign x_div_2 = x_div[1];
+    //assign x_div_3 = x_div[2];
+    //assign x_div_4 = x_div[3];
+    //assign x_div_5 = x_div[4];
+    //assign x_div_6 = x_div[5];
+    //assign x_div_7 = x_div[6];
+    //assign y_div_1 = y_div[0];
+    //assign y_div_2 = y_div[1];
+    //assign y_div_3 = y_div[2];
+    //assign y_div_4 = y_div[3];
+    //assign y_div_5 = y_div[4];
+    //assign y_div_6 = y_div[5];
+    //assign y_div_7 = y_div[6];
 
     logic [6:0] data_valid_out_x;
     logic [6:0] data_valid_out_y;
@@ -169,14 +169,14 @@ module k_means #(parameter MAX_ITER = 10) (
 
     // Minimum module
     logic [2:0] min_index [BRAM_WIDTH-1:0];
-    logic [2:0] min_index_calc [BRAM_WIDTH-1:0];
     generate
         genvar j;
         for (j=0; j<64; j=j+1) begin
             minimum min(
+                .clk_in(clk_in),
                 .vals_in(centroid_distance[j]),
                 .max(num_balls),
-                .minimum_index(min_index_calc[j]));
+                .minimum_index(min_index[j]));
         end
     endgenerate
  
@@ -187,27 +187,30 @@ module k_means #(parameter MAX_ITER = 10) (
     logic [14:0] x_sum_comb_1_1 [31:0][6:0];
     logic [14:0] y_sum_comb_1_1 [31:0][6:0];
     logic [5:0] total_mass_comb_1_1 [31:0][6:0];
-    logic [14:0] x_sum_comb_1_2 [15:0][6:0];
-    logic [14:0] y_sum_comb_1_2 [15:0][6:0];
-    logic [5:0] total_mass_comb_1_2 [15:0][6:0];
-    logic [14:0] x_sum_temp [15:0][6:0];
-    logic [14:0] y_sum_temp [15:0][6:0];
-    logic [5:0] total_mass_temp [15:0][6:0];
-    logic [14:0] x_sum_comb_2_0 [7:0][6:0];
-    logic [14:0] y_sum_comb_2_0 [7:0][6:0];
-    logic [5:0] total_mass_comb_2_0 [7:0][6:0];
-    logic [14:0] x_sum_comb_2_1 [3:0][6:0];
-    logic [14:0] y_sum_comb_2_1 [3:0][6:0];
-    logic [5:0] total_mass_comb_2_1 [3:0][6:0];
-    logic [14:0] x_sum_comb_2_2 [1:0][6:0];
-    logic [14:0] y_sum_comb_2_2 [1:0][6:0];
-    logic [5:0] total_mass_comb_2_2 [1:0][6:0];
-    logic [14:0] x_sum_comb_2_3 [6:0];
-    logic [14:0] y_sum_comb_2_3 [6:0];
-    logic [5:0] total_mass_comb_2_3 [6:0];
+    logic [14:0] x_sum_temp_1 [31:0][6:0];
+    logic [14:0] y_sum_temp_1 [31:0][6:0];
+    logic [5:0] total_mass_temp_1 [31:0][6:0];
+    logic [14:0] x_sum_comb_2_0 [15:0][6:0];
+    logic [14:0] y_sum_comb_2_0 [15:0][6:0];
+    logic [5:0] total_mass_comb_2_0 [15:0][6:0];
+    logic [14:0] x_sum_comb_2_1 [7:0][6:0];
+    logic [14:0] y_sum_comb_2_1 [7:0][6:0];
+    logic [5:0] total_mass_comb_2_1 [7:0][6:0];
+    logic [14:0] x_sum_temp_2 [7:0][6:0];
+    logic [14:0] y_sum_temp_2 [7:0][6:0];
+    logic [5:0] total_mass_temp_2 [7:0][6:0];
+    logic [14:0] x_sum_comb_3_0 [3:0][6:0];
+    logic [14:0] y_sum_comb_3_0 [3:0][6:0];
+    logic [5:0] total_mass_comb_3_0 [3:0][6:0];
+    logic [14:0] x_sum_comb_3_1 [1:0][6:0];
+    logic [14:0] y_sum_comb_3_1 [1:0][6:0];
+    logic [5:0] total_mass_comb_3_1 [1:0][6:0];
+    logic [14:0] x_sum_comb_3_2 [6:0];
+    logic [14:0] y_sum_comb_3_2 [6:0];
+    logic [5:0] total_mass_comb_3_2 [6:0];
 
-    // First stage of summing
     always_comb begin
+        // First stage of summing
         for (int i=0; i<64; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
                 if (bram_data_out[x_read>>6][i] == 1'b1 && j == min_index[i]) begin
@@ -230,40 +233,42 @@ module k_means #(parameter MAX_ITER = 10) (
                 total_mass_comb_1_1[i][j] = total_mass_comb_1_0[2*i][j] + total_mass_comb_1_0[2*i+1][j];
             end
         end
-        for (int i=0; i<16; i=i+1) begin
-            for (int j=0; j<7; j=j+1) begin
-                x_sum_comb_1_2[i][j] = x_sum_comb_1_1[2*i][j] + x_sum_comb_1_1[2*i+1][j];
-                y_sum_comb_1_2[i][j] = y_sum_comb_1_1[2*i][j] + y_sum_comb_1_1[2*i+1][j];
-                total_mass_comb_1_2[i][j] = total_mass_comb_1_1[2*i][j] + total_mass_comb_1_1[2*i+1][j];
-            end
-        end
 
         // Second stage of summing
-        for (int i=0; i<8; i=i+1) begin
+        for (int i=0; i<16; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
-                x_sum_comb_2_0[i][j] = x_sum_temp[2*i][j] + x_sum_temp[2*i+1][j];
-                y_sum_comb_2_0[i][j] = y_sum_temp[2*i][j] + y_sum_temp[2*i+1][j];
-                total_mass_comb_2_0[i][j] = total_mass_temp[2*i][j] + total_mass_temp[2*i+1][j];
+                x_sum_comb_2_0[i][j] = x_sum_temp_1[2*i][j] + x_sum_temp_1[2*i+1][j];
+                y_sum_comb_2_0[i][j] = y_sum_temp_1[2*i][j] + y_sum_temp_1[2*i+1][j];
+                total_mass_comb_2_0[i][j] = total_mass_temp_1[2*i][j] + total_mass_temp_1[2*i+1][j];
             end
         end
-        for (int i=0; i<4; i=i+1) begin
+        for (int i=0; i<8; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
                 x_sum_comb_2_1[i][j] = x_sum_comb_2_0[2*i][j] + x_sum_comb_2_0[2*i+1][j];
                 y_sum_comb_2_1[i][j] = y_sum_comb_2_0[2*i][j] + y_sum_comb_2_0[2*i+1][j];
                 total_mass_comb_2_1[i][j] = total_mass_comb_2_0[2*i][j] + total_mass_comb_2_0[2*i+1][j];
             end
         end
+
+        // Third stage of summing
+        for (int i=0; i<4; i=i+1) begin
+            for (int j=0; j<7; j=j+1) begin
+                x_sum_comb_3_0[i][j] = x_sum_temp_2[2*i][j] + x_sum_temp_2[2*i+1][j];
+                y_sum_comb_3_0[i][j] = y_sum_temp_2[2*i][j] + y_sum_temp_2[2*i+1][j];
+                total_mass_comb_3_0[i][j] = total_mass_temp_2[2*i][j] + total_mass_temp_2[2*i+1][j];
+            end
+        end
         for (int i=0; i<2; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
-                x_sum_comb_2_2[i][j] = x_sum_comb_2_1[2*i][j] + x_sum_comb_2_1[2*i+1][j];
-                y_sum_comb_2_2[i][j] = y_sum_comb_2_1[2*i][j] + y_sum_comb_2_1[2*i+1][j];
-                total_mass_comb_2_2[i][j] = total_mass_comb_2_1[2*i][j] + total_mass_comb_2_1[2*i+1][j];
+                x_sum_comb_3_1[i][j] = x_sum_comb_3_0[2*i][j] + x_sum_comb_3_0[2*i+1][j];
+                y_sum_comb_3_1[i][j] = y_sum_comb_3_0[2*i][j] + y_sum_comb_3_0[2*i+1][j];
+                total_mass_comb_3_1[i][j] = total_mass_comb_3_0[2*i][j] + total_mass_comb_3_0[2*i+1][j];
             end
         end
         for (int j=0; j<7; j=j+1) begin
-            x_sum_comb_2_3[j] = x_sum_comb_2_2[0][j] + x_sum_comb_2_2[1][j];
-            y_sum_comb_2_3[j] = y_sum_comb_2_2[0][j] + y_sum_comb_2_2[1][j];
-            total_mass_comb_2_3[j] = total_mass_comb_2_2[0][j] + total_mass_comb_2_2[1][j];
+            x_sum_comb_3_2[j] = x_sum_comb_3_1[0][j] + x_sum_comb_3_1[1][j];
+            y_sum_comb_3_2[j] = y_sum_comb_3_1[0][j] + y_sum_comb_3_1[1][j];
+            total_mass_comb_3_2[j] = total_mass_comb_3_1[0][j] + total_mass_comb_3_1[1][j];
         end
     end
 
@@ -275,6 +280,8 @@ module k_means #(parameter MAX_ITER = 10) (
                 total_mass[i] <= 0;
                 x_ready[i] <= 0;
                 y_ready[i] <= 0;
+                centroids_x_out[i] <= centroids_x_in[i];
+                centroids_y_out[i] <= centroids_y_in[i];
             end
             data_valid_out <= 0;
             current_iteration <= 0;
@@ -311,7 +318,7 @@ module k_means #(parameter MAX_ITER = 10) (
                     end
 
                     // Cycle update state
-                    update_state <= update_state == 3 ? 0 : update_state + 1;
+                    update_state <= update_state == 5 ? 0 : update_state + 1;
 
                     case (update_state) 
                         0: begin
@@ -324,25 +331,29 @@ module k_means #(parameter MAX_ITER = 10) (
                                 end
                             end
                         end
-                        1: begin
-                            for (int i=0; i<BRAM_WIDTH; i=i+1) begin
-                                min_index[i] <= min_index_calc[i];
-                            end
-                        end
-                        2: begin
-                            for (int i=0; i<16; i=i+1) begin
+                        3: begin
+                            for (int i=0; i<32; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
-                                    x_sum_temp[i][j] <= x_sum_comb_1_2[i][j];
-                                    y_sum_temp[i][j] <= y_sum_comb_1_2[i][j];
-                                    total_mass_temp[i][j] <= total_mass_comb_1_2[i][j];
+                                    x_sum_temp_1[i][j] <= x_sum_comb_1_1[i][j];
+                                    y_sum_temp_1[i][j] <= y_sum_comb_1_1[i][j];
+                                    total_mass_temp_1[i][j] <= total_mass_comb_1_1[i][j];
                                 end
                             end
                         end
-                        3: begin
+                        4: begin
+                            for (int i=0; i<8; i=i+1) begin
+                                for (int j=0; j<7; j=j+1) begin
+                                    x_sum_temp_2[i][j] <= x_sum_comb_2_1[i][j];
+                                    y_sum_temp_2[i][j] <= y_sum_comb_2_1[i][j];
+                                    total_mass_temp_2[i][j] <= total_mass_comb_2_1[i][j];
+                                end
+                            end
+                        end
+                        5: begin
                             for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_2_3[i] + x_sum[i];
-                                y_sum[i] <= y_sum_comb_2_3[i] + y_sum[i];
-                                total_mass[i] <= total_mass_comb_2_3[i] + total_mass[i];
+                                x_sum[i] <= x_sum_comb_3_2[i] + x_sum[i];
+                                y_sum[i] <= y_sum_comb_3_2[i] + y_sum[i];
+                                total_mass[i] <= total_mass_comb_3_2[i] + total_mass[i];
                             end
                             if (x_read == 256) begin
                                 x_read <= 0;
@@ -400,7 +411,6 @@ module k_means #(parameter MAX_ITER = 10) (
             endcase
         end
     end
-
 endmodule
 
 `default_nettype wire

@@ -2,6 +2,7 @@
 `default_nettype none
 
 module minimum (
+    input wire clk_in,
     input wire [6:0][8:0] vals_in,
     input wire [2:0] max,
     output logic [2:0] minimum_index
@@ -11,8 +12,22 @@ module minimum (
     logic [2:0] index_0 [7:0];
     logic [8:0] min_1 [3:0];
     logic [2:0] index_1 [3:0];
+    logic [8:0] min_temp [3:0];
+    logic [2:0] index_temp [3:0];
     logic [8:0] min_2 [1:0];
     logic [2:0] index_2 [1:0];
+
+    always_ff @(posedge clk_in) begin
+        for (int i=0; i<4; i=i+1) begin
+            min_temp[i] <= min_1[i];
+            index_temp[i] <= index_1[i];
+        end
+        if (min_2[0] < min_2[1]) begin
+            minimum_index <= index_2[0];
+        end else begin
+            minimum_index <= index_2[1];
+        end
+    end
 
     always_comb begin
         for (int i=0; i<7; i=i+1) begin
@@ -31,19 +46,15 @@ module minimum (
             end
         end
         for (int j=0; j<2; j=j+1) begin
-            if (min_1[2*j] < min_1[2*j+1]) begin
-                min_2[j] = min_1[2*j];
-                index_2[j] = index_1[2*j];
+            if (min_temp[2*j] < min_temp[2*j+1]) begin
+                min_2[j] = min_temp[2*j];
+                index_2[j] = index_temp[2*j];
             end else begin
-                min_2[j] = min_1[2*j+1];
-                index_2[j] = index_1[2*j+1];
+                min_2[j] = min_temp[2*j+1];
+                index_2[j] = index_temp[2*j+1];
             end
         end
-        if (min_2[0] < min_2[1]) begin
-            minimum_index = index_2[0];
-        end else begin
-            minimum_index = index_2[1];
-        end
+
     end
 endmodule
 
