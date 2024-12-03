@@ -77,7 +77,7 @@ module k_means #(parameter MAX_ITER = 9) (
     logic [6:0] x_ready;
     logic [6:0] y_ready;
 
-    logic [6:0][8:0] centroid_distance [63:0];
+    logic [6:0][8:0] centroid_distance [31:0];
     
     logic [6:0] current_iteration;
 
@@ -157,10 +157,10 @@ module k_means #(parameter MAX_ITER = 9) (
     end
 
     // Minimum module
-    logic [2:0] min_index [BRAM_WIDTH-1:0];
+    logic [2:0] min_index [31:0];
     generate
         genvar j;
-        for (j=0; j<64; j=j+1) begin
+        for (j=0; j<32; j=j+1) begin
             minimum min(
                 .clk_in(clk_in),
                 .vals_in(centroid_distance[j]),
@@ -252,10 +252,20 @@ module k_means #(parameter MAX_ITER = 9) (
 
                     case (update_state) 
                         0: begin
-                            for (int i=0; i<BRAM_WIDTH; i=i+1) begin
+                            for (int i=0; i<32; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     centroid_distance[i][j] <= (
                                         ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
+                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
+                                    );
+                                end
+                            end
+                        end
+                        1: begin
+                            for (int i=0; i<32; i=i+1) begin
+                                for (int j=0; j<7; j=j+1) begin
+                                    centroid_distance[i][j] <= (
+                                        ((x_read + i+32 > centroids_x_out[j]) ? x_read + i+32 - centroids_x_out[j] : centroids_x_out[j] - x_read - i-32) + 
                                         ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
                                     );
                                 end
@@ -281,12 +291,12 @@ module k_means #(parameter MAX_ITER = 9) (
                             for (int i=0; i<16; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     x_sum_comb_1[i][j] <= (
-                                        ((bram_data_out[x_read>>6][2*i+32] == 1'b1 && j == min_index[2*i+32]) ? 2*i+32 : 0) + 
-                                        ((bram_data_out[x_read>>6][2*i+33] == 1'b1 && j == min_index[2*i+33]) ? 2*i+33 : 0)
+                                        ((bram_data_out[x_read>>6][2*i+32] == 1'b1 && j == min_index[2*i]) ? 2*i+32 : 0) + 
+                                        ((bram_data_out[x_read>>6][2*i+33] == 1'b1 && j == min_index[2*i]) ? 2*i+33 : 0)
                                     );
                                     total_mass_comb_1[i][j] <= (
-                                        (bram_data_out[x_read>>6][2*i+32] && j == min_index[2*i+32]) + 
-                                        (bram_data_out[x_read>>6][2*i+33] && j == min_index[2*i+33])
+                                        (bram_data_out[x_read>>6][2*i+32] && j == min_index[2*i]) + 
+                                        (bram_data_out[x_read>>6][2*i+33] && j == min_index[2*i])
                                     );
                                 end
                             end
