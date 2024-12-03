@@ -45,32 +45,6 @@ module k_means #(parameter MAX_ITER = 15) (
     logic [23:0] x_div [6:0];
     logic [23:0] y_div [6:0];
 
-    //// for debugging in gtkwave
-    //logic [23:0] x_sum_1, x_sum_2, x_sum_3, x_sum_4, x_sum_5, x_sum_6, x_sum_7;
-    //logic [23:0] y_sum_1, y_sum_2, y_sum_3, y_sum_4, y_sum_5, y_sum_6, y_sum_7;
-    //logic [23:0] total_mass_1, total_mass_2, total_mass_3, total_mass_4, total_mass_5, total_mass_6, total_mass_7;
-    //assign x_sum_1 = x_sum[0];
-    //assign x_sum_2 = x_sum[1];
-    //assign x_sum_3 = x_sum[2];
-    //assign x_sum_4 = x_sum[3];
-    //assign x_sum_5 = x_sum[4];
-    //assign x_sum_6 = x_sum[5];
-    //assign x_sum_7 = x_sum[6];
-    //assign y_sum_1 = y_sum[0];
-    //assign y_sum_2 = y_sum[1];
-    //assign y_sum_3 = y_sum[2];
-    //assign y_sum_4 = y_sum[3];
-    //assign y_sum_5 = y_sum[4];
-    //assign y_sum_6 = y_sum[5];
-    //assign y_sum_7 = y_sum[6];
-    //assign total_mass_1 = total_mass[0];
-    //assign total_mass_2 = total_mass[1];
-    //assign total_mass_3 = total_mass[2];
-    //assign total_mass_4 = total_mass[3];
-    //assign total_mass_5 = total_mass[4];
-    //assign total_mass_6 = total_mass[5];
-    //assign total_mass_7 = total_mass[6];
-
     logic [6:0] x_ready;
     logic [6:0] y_ready;
     logic [6:0] current_iteration;
