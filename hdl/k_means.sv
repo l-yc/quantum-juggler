@@ -30,7 +30,6 @@ module k_means #(parameter MAX_ITER = 9) (
 
     logic [8:0] x_read;
     logic [7:0] y_read;
-    logic [4:0] write_enable;
     logic [BRAM_WIDTH-1:0] bram_data_out [4:0];
 
     logic [13:0] div_ready;
@@ -112,6 +111,7 @@ module k_means #(parameter MAX_ITER = 9) (
    
     // Create the BRAMs for storing mask data
     logic [BRAM_WIDTH-1:0] bram_data_in;
+    logic [4:0] write_enable;
     generate
         genvar k;
         for (k=0; k<5; k=k+1) begin
@@ -170,8 +170,10 @@ module k_means #(parameter MAX_ITER = 9) (
     endgenerate
  
     // Sum up all the values 
-    logic [10:0] x_sum_comb_1 [31:0][6:0];
-    logic [5:0] total_mass_comb_1 [31:0][6:0];
+    logic [10:0] x_sum_comb_1 [15:0][6:0];
+    logic [5:0] total_mass_comb_1 [15:0][6:0];
+    logic [10:0] x_sum_comb_2 [7:0][6:0];
+    logic [5:0] total_mass_comb_2 [7:0][6:0];
     logic [10:0] x_sum_comb_3_1 [3:0][6:0];
     logic [5:0] total_mass_comb_3_1 [3:0][6:0];
     logic [10:0] x_sum_comb_3_2 [1:0][6:0];
@@ -180,11 +182,16 @@ module k_means #(parameter MAX_ITER = 9) (
     logic [5:0] total_mass_comb_3_3 [6:0];
 
     always_comb begin
-        // Fourth stage of summing
+        for (int i=0; i<8; i=i+1) begin
+            for (int j=0; j<7; j=j+1) begin
+                x_sum_comb_2[i][j] = x_sum_comb_1[2*i][j] + x_sum_comb_1[2*i+1][j];
+                total_mass_comb_2[i][j] = total_mass_comb_1[2*i][j] + total_mass_comb_1[2*i+1][j];
+            end
+        end
         for (int i=0; i<4; i=i+1) begin
             for (int j=0; j<7; j=j+1) begin
-                x_sum_comb_3_1[i][j] = x_sum_comb_1[2*i][j] + x_sum_comb_1[2*i+1][j];
-                total_mass_comb_3_1[i][j] = total_mass_comb_1[2*i][j] + total_mass_comb_1[2*i+1][j];
+                x_sum_comb_3_1[i][j] = x_sum_comb_2[2*i][j] + x_sum_comb_2[2*i+1][j];
+                total_mass_comb_3_1[i][j] = total_mass_comb_2[2*i][j] + total_mass_comb_2[2*i+1][j];
             end
         end
         for (int i=0; i<2; i=i+1) begin
@@ -213,7 +220,6 @@ module k_means #(parameter MAX_ITER = 9) (
             div_ready[0] <= 0;
             update_state <= 0;
             state <= STORE;
-            write_enable <= 0;
         end else begin
             case (state) 
                 STORE: begin
@@ -236,14 +242,13 @@ module k_means #(parameter MAX_ITER = 9) (
                     end
                 end
                 UPDATE: begin
-                    write_enable <= 0;
                     if (y_read == HEIGHT) begin
                         state <= DIVIDE;
                         div_ready[0] <= 1;
                     end
 
                     // Cycle update state
-                    update_state <= update_state == 6 ? 0 : update_state + 1;
+                    update_state <= update_state == 5 ? 0 : update_state + 1;
 
                     case (update_state) 
                         0: begin
@@ -257,8 +262,8 @@ module k_means #(parameter MAX_ITER = 9) (
                             end
                         end
                         3: begin
-                            // First stage of summing
-                            for (int i=0; i<32; i=i+1) begin
+                            // Add BRAM indices 0-31
+                            for (int i=0; i<16; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
                                     x_sum_comb_1[i][j] <= (
                                         ((bram_data_out[x_read>>6][2*i] == 1'b1 && j == min_index[2*i]) ? 2*i : 0) + 
@@ -272,24 +277,28 @@ module k_means #(parameter MAX_ITER = 9) (
                             end
                         end
                         4: begin
-                            // Second stage of summing
+                            // Add BRAM indices 32-63
                             for (int i=0; i<16; i=i+1) begin
                                 for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= x_sum_comb_1[2*i][j] + x_sum_comb_1[2*i+1][j];
-                                    total_mass_comb_1[i][j] <= total_mass_comb_1[2*i][j] + total_mass_comb_1[2*i+1][j];
+                                    x_sum_comb_1[i][j] <= (
+                                        ((bram_data_out[x_read>>6][2*i+32] == 1'b1 && j == min_index[2*i+32]) ? 2*i+32 : 0) + 
+                                        ((bram_data_out[x_read>>6][2*i+33] == 1'b1 && j == min_index[2*i+33]) ? 2*i+33 : 0)
+                                    );
+                                    total_mass_comb_1[i][j] <= (
+                                        (bram_data_out[x_read>>6][2*i+32] && j == min_index[2*i+32]) + 
+                                        (bram_data_out[x_read>>6][2*i+33] && j == min_index[2*i+33])
+                                    );
                                 end
+                            end
+                            // Finish adding up BRAM indices 0-31
+                            for (int i=0; i<7; i=i+1) begin
+                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
+                                y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
+                                total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
                             end
                         end
                         5: begin
-                            // Third stage of summing
-                            for (int i=0; i<8; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= x_sum_comb_1[2*i][j] + x_sum_comb_1[2*i+1][j];
-                                    total_mass_comb_1[i][j] <= total_mass_comb_1[2*i][j] + total_mass_comb_1[2*i+1][j];
-                                end
-                            end
-                        end
-                        6: begin
+                            // Finish adding up BRAM indices 32-63
                             for (int i=0; i<7; i=i+1) begin
                                 x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
                                 y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
