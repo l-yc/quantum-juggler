@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 9) (
+module k_means #(parameter MAX_ITER = 15) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
@@ -44,7 +44,7 @@ module k_means #(parameter MAX_ITER = 9) (
     logic [23:0] x_div [6:0];
     logic [23:0] y_div [6:0];
 
-    //// for debugging in gtkwave
+    // for debugging in gtkwave
     logic [23:0] x_sum_1, x_sum_2, x_sum_3, x_sum_4, x_sum_5, x_sum_6, x_sum_7;
     logic [23:0] y_sum_1, y_sum_2, y_sum_3, y_sum_4, y_sum_5, y_sum_6, y_sum_7;
     logic [23:0] total_mass_1, total_mass_2, total_mass_3, total_mass_4, total_mass_5, total_mass_6, total_mass_7;
@@ -70,9 +70,6 @@ module k_means #(parameter MAX_ITER = 9) (
     assign total_mass_6 = total_mass[5];
     assign total_mass_7 = total_mass[6];
 
-    logic [6:0] data_valid_out_x;
-    logic [6:0] data_valid_out_y;
-    
     logic [6:0] x_ready;
     logic [6:0] y_ready;
     
@@ -89,7 +86,7 @@ module k_means #(parameter MAX_ITER = 9) (
                 .data_valid_in(div_ready[0]),
                 .quotient_out(x_div[l]),
                 .remainder_out(),
-                .data_valid_out(data_valid_out_x[l]),
+                .data_valid_out(),
                 .error_out(),
                 .busy_out());
             divider #(.WIDTH(24)) div_y (
@@ -100,7 +97,7 @@ module k_means #(parameter MAX_ITER = 9) (
                 .data_valid_in(div_ready[0]),
                 .quotient_out(y_div[l]),
                 .remainder_out(),
-                .data_valid_out(data_valid_out_y[l]),
+                .data_valid_out(),
                 .error_out(),
                 .busy_out());
             end
