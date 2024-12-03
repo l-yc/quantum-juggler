@@ -1,7 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 15) (
+//module k_means #(parameter MAX_ITER = 15) (
+module k_means #(parameter MAX_ITER = 4) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
@@ -19,6 +20,7 @@ module k_means #(parameter MAX_ITER = 15) (
     localparam WIDTH = 320;
     localparam HEIGHT = 180;
     localparam BRAM_WIDTH = 64;
+    localparam SUM_WIDTH = 16;
 
     enum logic [1:0] {
         STORE = 0,
@@ -26,7 +28,7 @@ module k_means #(parameter MAX_ITER = 15) (
         DIVIDE = 2
     } state;
 
-    logic [2:0] update_state;
+    logic [3:0] update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -72,7 +74,6 @@ module k_means #(parameter MAX_ITER = 15) (
 
     logic [6:0] x_ready;
     logic [6:0] y_ready;
-    
     logic [6:0] current_iteration;
 
     generate
@@ -153,11 +154,11 @@ module k_means #(parameter MAX_ITER = 15) (
     end
 
     // Minimum module
-    logic [2:0] min_index [15:0];
-    logic [6:0][8:0] centroid_distance [15:0];
+    logic [2:0] min_index [SUM_WIDTH-1:0];
+    logic [6:0][8:0] centroid_distance [SUM_WIDTH-1:0];
     generate
         genvar j;
-        for (j=0; j<16; j=j+1) begin
+        for (j=0; j<SUM_WIDTH; j=j+1) begin
             minimum min(
                 .clk_in(clk_in),
                 .vals_in(centroid_distance[j]),
@@ -237,147 +238,56 @@ module k_means #(parameter MAX_ITER = 15) (
                     end
 
                     // Cycle update state
-                    update_state <= update_state == 7 ? 0 : update_state + 1;
-                    curr_bram_data_out = bram_data_out[x_read>>6];
+                    update_state <= update_state == BRAM_WIDTH/SUM_WIDTH+3 ? 0 : update_state + 1;
+                    curr_bram_data_out <= bram_data_out[x_read>>6];
 
-                    case (update_state) 
-                        0: begin
-                            // Calculate centroid distances 0-15
-                            for (int i=0; i<16; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i][j] <= (
-                                        ((x_read + i > centroids_x_out[j]) ? x_read + i - centroids_x_out[j] : centroids_x_out[j] - x_read - i) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
+                    // Calculate centroid distances
+                    if (update_state < BRAM_WIDTH/SUM_WIDTH) begin
+                        for (int i=0; i<SUM_WIDTH; i=i+1) begin
+                            for (int j=0; j<7; j=j+1) begin
+                                centroid_distance[i][j] <= (
+                                    ((x_read + i + update_state*SUM_WIDTH > centroids_x_out[j]) ? 
+                                        x_read + i + update_state*SUM_WIDTH - centroids_x_out[j] : centroids_x_out[j] - x_read - i - update_state*SUM_WIDTH) + 
+                                    ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
+                                );
                             end
                         end
-                        1: begin
-                            // Calculate centroid distances 16-31
-                            for (int i=0; i<16; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i][j] <= (
-                                        ((x_read + i+16 > centroids_x_out[j]) ? x_read + i+16 - centroids_x_out[j] : centroids_x_out[j] - x_read - i-16) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
+                    end
+
+                    // Initialize x sum
+                    if (3 <= update_state && update_state < BRAM_WIDTH/SUM_WIDTH+3) begin
+                        for (int i=0; i<SUM_WIDTH/2; i=i+1) begin
+                            for (int j=0; j<7; j=j+1) begin
+                                x_sum_comb_1[i][j] <= (
+                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] == 1'b1 && j == min_index[2*i]) ? 2*i+(update_state-3)*SUM_WIDTH : 0) + 
+                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] == 1'b1 && j == min_index[2*i+1]) ? 2*i+(update_state-3)*SUM_WIDTH+1 : 0)
+                                );
+                                total_mass_comb_1[i][j] <= (
+                                    (curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] && j == min_index[2*i]) + 
+                                    (curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] && j == min_index[2*i+1])
+                                );
                             end
                         end
-                        2: begin
-                            // Calculate centroid distances 32-47
-                            for (int i=0; i<16; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i][j] <= (
-                                        ((x_read + i+32 > centroids_x_out[j]) ? x_read + i+32 - centroids_x_out[j] : centroids_x_out[j] - x_read - i-32) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
-                            end
+                    end
+
+                    // Accumulate x sum
+                    if (4 <= update_state && update_state <= BRAM_WIDTH/SUM_WIDTH+3) begin
+                        for (int i=0; i<7; i=i+1) begin
+                            x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
+                            y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
+                            total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
                         end
-                        3: begin
-                            // Calculate centroid distances 48-63
-                            for (int i=0; i<16; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    centroid_distance[i][j] <= (
-                                        ((x_read + i+48 > centroids_x_out[j]) ? x_read + i+48 - centroids_x_out[j] : centroids_x_out[j] - x_read - i-48) + 
-                                        ((y_read > centroids_y_out[j]) ? y_read - centroids_y_out[j] : centroids_y_out[j] - y_read)
-                                    );
-                                end
-                            end
-                            // Add BRAM indices 0-15
-                            for (int i=0; i<8; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= (
-                                        ((curr_bram_data_out[2*i] == 1'b1 && j == min_index[2*i]) ? 2*i : 0) + 
-                                        ((curr_bram_data_out[2*i+1] == 1'b1 && j == min_index[2*i+1]) ? 2*i+1 : 0)
-                                    );
-                                    total_mass_comb_1[i][j] <= (
-                                        (curr_bram_data_out[2*i] && j == min_index[2*i]) + 
-                                        (curr_bram_data_out[2*i+1] && j == min_index[2*i+1])
-                                    );
-                                end
-                            end
+                    end
+
+                    // Move to next line
+                    if (update_state == BRAM_WIDTH/SUM_WIDTH+3) begin
+                        if (x_read == 256) begin
+                            x_read <= 0;
+                            y_read <= y_read + 1;
+                        end else begin
+                            x_read <= x_read + 64;
                         end
-                        4: begin
-                            // Finish adding up BRAM indices 0-15
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
-                                y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
-                                total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
-                            end
-                            // Add BRAM indices 16-31
-                            for (int i=0; i<8; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= (
-                                        ((curr_bram_data_out[2*i+16] == 1'b1 && j == min_index[2*i]) ? 2*i+16 : 0) + 
-                                        ((curr_bram_data_out[2*i+17] == 1'b1 && j == min_index[2*i]) ? 2*i+17 : 0)
-                                    );
-                                    total_mass_comb_1[i][j] <= (
-                                        (curr_bram_data_out[2*i+16] && j == min_index[2*i]) + 
-                                        (curr_bram_data_out[2*i+17] && j == min_index[2*i])
-                                    );
-                                end
-                            end
-                        end
-                        5: begin
-                            // Finish adding up BRAM indices 16-31
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
-                                y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
-                                total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
-                            end
-                            // Add BRAM indices 32-47
-                            for (int i=0; i<8; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= (
-                                        ((curr_bram_data_out[2*i+32] == 1'b1 && j == min_index[2*i]) ? 2*i+32 : 0) + 
-                                        ((curr_bram_data_out[2*i+33] == 1'b1 && j == min_index[2*i]) ? 2*i+33 : 0)
-                                    );
-                                    total_mass_comb_1[i][j] <= (
-                                        (curr_bram_data_out[2*i+32] && j == min_index[2*i]) + 
-                                        (curr_bram_data_out[2*i+33] && j == min_index[2*i])
-                                    );
-                                end
-                            end
-                        end
-                        6: begin
-                            // Finish adding up BRAM indices 32-47
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
-                                y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
-                                total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
-                            end
-                            // Add BRAM indices 48-63
-                            for (int i=0; i<8; i=i+1) begin
-                                for (int j=0; j<7; j=j+1) begin
-                                    x_sum_comb_1[i][j] <= (
-                                        ((curr_bram_data_out[2*i+48] == 1'b1 && j == min_index[2*i]) ? 2*i+48 : 0) + 
-                                        ((curr_bram_data_out[2*i+49] == 1'b1 && j == min_index[2*i]) ? 2*i+49 : 0)
-                                    );
-                                    total_mass_comb_1[i][j] <= (
-                                        (curr_bram_data_out[2*i+48] && j == min_index[2*i]) + 
-                                        (curr_bram_data_out[2*i+49] && j == min_index[2*i])
-                                    );
-                                end
-                            end
-                        end
-                        7: begin
-                            // Finish adding up BRAM indices 48-63
-                            for (int i=0; i<7; i=i+1) begin
-                                x_sum[i] <= x_sum_comb_3_3[i] + x_read * total_mass_comb_3_3[i] + x_sum[i];
-                                y_sum[i] <= total_mass_comb_3_3[i] * y_read + y_sum[i];
-                                total_mass[i] <= total_mass_comb_3_3[i] + total_mass[i];
-                            end
-                            if (x_read == 256) begin
-                                x_read <= 0;
-                                y_read <= y_read + 1;
-                            end else begin
-                                x_read <= x_read + 64;
-                            end
-                        end
-                        default: begin
-                        end
-                    endcase           
+                    end
                 end
                 DIVIDE: begin
                     update_state <= 0;
