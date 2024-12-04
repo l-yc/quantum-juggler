@@ -13,8 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-CLK_RATE = 100
-
 async def init(dut):
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
@@ -34,20 +32,27 @@ async def test_a(dut):
     await init(dut)
 
     await FallingEdge(dut.clk_in)
-    dut.pattern = [0, 0, 0, 0, 1, 3, 5]
+    dut.nf_in = 0;
+    #dut.pattern = [0, 0, 0, 0, 1, 3, 5]
+    #dut.pattern = [0, 0, 0, 0, 3, 3, 3]
+    #dut.pattern = [0, 0, 0, 0, 5, 5, 5]
+    dut.pattern = [0, 0, 0, 0, 3, 2, 4]
     dut.pattern_valid.value = 1
     dut.num_balls = 3
-    dut.hand_x_in = [1240, 40]
+    #dut.hand_x_in = [1240, 40]
+    dut.hand_x_in = [700, 500]
     dut.hand_y_in = [719, 719]
-    dut.cyc_per_beat = 4
+    dut.frame_per_beat = 5
 
     await ClockCycles(dut.clk_in, 1) #wait three clock cycles
     dut.pattern_valid.value = 0
 
     xs = [ [] for _ in range(3) ]
     ys = [ [] for _ in range(3) ]
-    for i in range(10 * 4):
+    for i in range(40 * 5):
+        dut.nf_in = 1
         await ClockCycles(dut.clk_in, 1)
+        dut.nf_in = 0
         if dut.traj_valid:
             frame_xs = []
             frame_ys = []
@@ -66,6 +71,7 @@ async def test_a(dut):
             for j in range(3):
                 xs[j].append(frame_xs[j])
                 ys[j].append(frame_ys[j])
+        await ClockCycles(dut.clk_in, 1)
 
 
     #for i in range(3):
@@ -74,6 +80,7 @@ async def test_a(dut):
     print(xs[0])
     print(xs[1])
     print(xs[2])
+    np.savez('model_balls.npz', xs0=xs[0], xs1=xs[1], xs2=xs[2], ys0=ys[0], ys1=ys[1], ys2=ys[2])
 
     print('ok')
     if True:
@@ -96,6 +103,7 @@ async def test_a(dut):
             return scat[0]
 
         ani = animation.FuncAnimation(fig=fig, func=update, frames=len(xs[0]), interval=100)
+        plt.gca().invert_yaxis()
         plt.show()
 
 
@@ -179,8 +187,9 @@ def trajectory_generator_runner():
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [proj_path / "hdl" / "trajectory_generator.sv"]
     sources += [proj_path / "hdl" / "divider.sv"]
+    sources += [proj_path / "hdl" / "evt_counter.sv"]
     build_test_args = ["-Wall"]
-    parameters = { 'CLK_RATE': CLK_RATE }
+    parameters = { 'g': 4, 's': 20 }
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

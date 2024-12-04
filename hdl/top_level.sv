@@ -566,53 +566,77 @@ module top_level (
 
     //-------------- END K MEANS CLUSTERING --------------//
 
-//	// MARK: trajectory modules {{{
-//	logic [10:0] traj_x_out[6:0];
-//	logic [9:0] traj_y_out[6:0];
-//	logic traj_valid;
-//    trajectory_generator
-//        #(
-//            .GRAVITY(9.81),
-//            .CLK_RATE(100_000000),
-//            .DPI(96)
-//        ) traj_gen
-//        (
-//            .clk_in(clk_pixel), // TODO what clock rate?
-//            .rst_in(sys_rst_pixel),
-//            .pattern({0, 0, 0, 0, 1, 3, 5}),
-//            .pattern_valid(1),
-//            .num_balls(3), // TODO replace with num balls
-//            .hand_x_in({1240, 40}), // TODO replace with hands
-//            .hand_y_in({719, 719}), // TODO replace with hands
-//            .cyc_per_beat(10_000000),
-//            .traj_x_out(traj_x_out),
-//            .traj_y_out(traj_y_out),
-//            .traj_valid(traj_valid)
-//        );	
-//	
-//	logic [7:0] trajectory_red;
-//	logic [7:0] trajectory_green;
-//	logic [7:0] trajectory_blue;
-//
-//    draw_trajectory draw_traj
-//        (
-//            .clk_in(clk_pixel), // TODO what clock rate?
-//            .rst_in(sys_rst_pixel),
-//
-//            .num_balls(3), // TODO replace with num balls
-//            .traj_x_in(traj_x_out),
-//            .traj_y_in(traj_y_out),
-//            .traj_valid(traj_valid),
-//            .hand_x_in({1240, 40}), // TODO replace with hands
-//            .hand_y_in({719, 719}), // TODO replace with hands
-//
-//            .hcount_in(hcount_hdmi),
-//            .vcount_in(vcount_hdmi),
-//            .red_out(trajectory_red),
-//            .green_out(trajectory_green),
-//            .blue_out(trajectory_blue)
-//        );
-//    // }}}
+	// MARK: trajectory modules {{{
+	logic [10:0] traj_x_out[6:0];
+	logic [9:0] traj_y_out[6:0];
+	logic traj_valid;
+    trajectory_generator
+        #(
+            .g(6)
+        ) traj_gen
+        (
+            .clk_in(clk_pixel),
+            .rst_in(sys_rst_pixel),
+			.nf_in(nf_hdmi),
+            .pattern(siteswap_pattern),
+            .pattern_valid(pattern_valid),
+            .num_balls(3), // TODO replace with num balls
+            .hand_x_in({700, 500}), // TODO replace with hands
+            .hand_y_in({719, 719}), // TODO replace with hands
+            .frame_per_beat(5),
+            .traj_x_out(traj_x_out),
+            .traj_y_out(traj_y_out),
+            .traj_valid(traj_valid)
+        );	
+	
+	logic [7:0] trajectory_red;
+	logic [7:0] trajectory_green;
+	logic [7:0] trajectory_blue;
+
+    draw_trajectory draw_traj
+        (
+            .clk_in(clk_pixel),
+            .rst_in(sys_rst_pixel),
+
+            .num_balls(3), // TODO replace with num balls
+            .traj_x_in(traj_x_out),
+            .traj_y_in(traj_y_out),
+            //.traj_valid(traj_valid),
+            .traj_valid(1),
+            .hand_x_in({1240, 40}), // TODO replace with hands
+            .hand_y_in({719, 719}), // TODO replace with hands
+
+            .hcount_in(hcount_hdmi),
+            .vcount_in(vcount_hdmi),
+            .red_out(trajectory_red),
+            .green_out(trajectory_green),
+            .blue_out(trajectory_blue)
+        );
+    // }}}
+
+	// MARK: pattern eval {{{
+	// TODO hook up to real positions after Kmeans is done
+	logic eval_out;
+	logic [14:0] pattern_error;
+	logic pattern_correct;
+	pattern_evaluation
+	#(
+		.THRESHOLD(100)
+	) pattern_evaluator
+	(
+		.clk_in(clk_pixel), // TODO what clock rate?
+		.rst_in(sys_rst_pixel),
+		.data_valid_in(pattern_valid && 1), // TODO replace with valid bit of kmeans
+		.num_balls(3), // TODO replace with num_balls
+		.model_balls_x(traj_x_out),
+		.model_balls_y(traj_y_out),
+		.real_balls_x(traj_x_out), // TODO replace with output of kmeans
+		.real_balls_y(traj_y_out), // TODO replace with output of kmeans
+		.data_valid_out(eval_out),
+		.pattern_error(pattern_error),
+		.pattern_correct(pattern_correct)
+	);
+	// }}}
 
     // HDMI video signal generator
     video_sig_gen vsg (
