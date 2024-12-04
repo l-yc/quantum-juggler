@@ -111,9 +111,14 @@ module k_means #(parameter MAX_ITER = 20) (
         end
     endgenerate
 
+    logic [8:0] prev_x;
+    always_ff @(posedge clk_in) begin
+        prev_x <= x_in;
+    end
+
     // Enable write if x is divisible by 64, mask is in frame, and state is STORE
     always_comb begin
-        if (state == STORE && 0 < x_in && x_in <= WIDTH && 0 < y_in && y_in <= HEIGHT && x_in[5:0] == 0) begin
+        if (state == STORE && 0 < x_in && x_in <= WIDTH && 0 < y_in && y_in <= HEIGHT && x_in[5:0] == 0 && x_in != prev_x) begin
             case (x_in >> 6)
                 1: write_enable = 5'b00001;
                 2: write_enable = 5'b00010;
@@ -261,9 +266,6 @@ module k_means #(parameter MAX_ITER = 20) (
                         for (int i=0; i<7; i=i+1) begin
                             centroids_x_out[i] <= x_div[i];
                             centroids_y_out[i] <= y_div[i];
-                            x_sum[i] <= 0;
-                            y_sum[i] <= 0;
-                            total_mass[i] <= 0;
                         end
                         x_read <= 0;
                         y_read <= 0;
@@ -279,6 +281,11 @@ module k_means #(parameter MAX_ITER = 20) (
                 end
                 IDLE: begin
                     data_valid_out <= 0;
+                    for (integer i=0; i<7; i=i+1) begin
+                        x_sum[i] <= 0;
+                        y_sum[i] <= 0;
+                        total_mass[i] <= 0;
+                    end
                     if (new_frame) begin
                         state <= STORE;
                     end

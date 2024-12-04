@@ -42,7 +42,7 @@ def generate_centroids_and_data(width=412, height=187, k=2):
                 data[y, x] = 1
     elif k == 4:
         centroids = [(50, 50), (150, 50), (50, 150), (150, 150)]
-        init_centroids = [(120,40), (180,60), (240,80), (300,100)]
+        init_centroids = [(120,40), (180,60), (150,80), (150,100)]
         data = np.zeros((height, width), dtype=int)
         for x in range(40, 61):
             for y in range(40, 61):
@@ -149,7 +149,7 @@ async def test_k_means_three_clusters(dut):
 #async def test_k_means_four_clusters(dut):
 #    """Cocotb test for the k_means module with four clusters"""
 #    await run_k_means_test(dut, k=4)
-#
+
 #@cocotb.test()
 #async def test_k_means_five_clusters(dut):
 #    """Cocotb test for the k_means module with five clusters"""
