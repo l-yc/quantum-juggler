@@ -42,9 +42,6 @@ module top_level (
     output wire         ddr3_odt
     );
 
-    // Shut up rgb1
-    assign rgb1 = 0;
-
     // Clock and Reset Signals
     logic sys_rst_camera;
     logic sys_rst_pixel;
@@ -455,7 +452,8 @@ module top_level (
         .pattern_valid_out(pattern_valid),
         .cat_out(ss_c),
         .an_out({ss0_an, ss1_an}));
-    assign rgb0[1] = pattern_valid;
+    assign rgb0[2] = pattern_valid;
+    assign rgb1[2] = pattern_valid;
     assign ss0_c = ss_c; // control upper four digit's cathodes
     assign ss1_c = ss_c; // same as above but for lower four digits
 
@@ -528,25 +526,30 @@ module top_level (
         .x_in(hcount_hdmi[10:2]),
         .y_in(vcount_hdmi[9:2]),
         .num_balls(num_balls),
-        .data_valid_in(mask),
+        .data_valid_in(mask && hcount_hdmi[1:0] == 0),
         .new_frame(nf_hdmi),
         .data_valid_out(k_means_valid),
         .centroids_x_out(centroids_x_calc),
         .centroids_y_out(centroids_y_calc));
 
     always_ff @(posedge clk_pixel) begin
-        if (sys_rst_pixel) begin
-            for (int i=0; i<7; i=i+1) begin
-                centroids_x_init[i] <= 20 + 40 * i;
-                centroids_y_init[i] <= 90;
-            end
-        end else if (k_means_valid) begin
+        for (int i=0; i<7; i=i+1) begin
+            centroids_x_init[i] <= 20 + 40 * i;
+            centroids_y_init[i] <= 90;
+        end
+//        if (sys_rst_pixel) begin
+//            for (int i=0; i<7; i=i+1) begin
+//                centroids_x_init[i] <= 20 + 40 * i;
+//                centroids_y_init[i] <= 90;
+//            end
+//        end 
+        if (k_means_valid) begin
             for (int i=0; i<7; i=i+1) begin
                 centroids_x[i] <= {centroids_x_calc[i], 2'b0};
                 centroids_y[i] <= {centroids_y_calc[i], 2'b0};
             end
-            centroids_x_init <= centroids_x_calc;
-            centroids_y_init <= centroids_y_calc;
+            //centroids_x_init <= centroids_x_calc;
+            //centroids_y_init <= centroids_y_calc;
         end
     end
 

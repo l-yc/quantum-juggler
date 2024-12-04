@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module k_means #(parameter MAX_ITER = 15) (
+module k_means #(parameter MAX_ITER = 20) (
     input wire clk_in,
     input wire rst_in,
     input wire [8:0] centroids_x_in [6:0],
@@ -24,7 +24,8 @@ module k_means #(parameter MAX_ITER = 15) (
     enum logic [1:0] {
         STORE = 0,
         UPDATE = 1,
-        DIVIDE = 2
+        DIVIDE = 2,
+        IDLE = 3
     } state;
 
     logic [3:0] update_state;
@@ -179,7 +180,6 @@ module k_means #(parameter MAX_ITER = 15) (
             case (state) 
                 STORE: begin
                     // Store incoming pixels in BRAMs
-                    data_valid_out <= 0;
                     if (0 <= x_in && x_in < WIDTH && 0 <= y_in && y_in < HEIGHT) begin
                         if (x_in[5:0] == 0) begin
                             // Divisible by 64, using a new BRAM
@@ -271,14 +271,20 @@ module k_means #(parameter MAX_ITER = 15) (
                             current_iteration <= current_iteration + 1;
                             state <= UPDATE;
                         end else begin
-                            data_valid_out <= 1;
                             current_iteration <= 0;
-                            state <= STORE;
+                            data_valid_out <= 1;
+                            state <= IDLE;
                         end
                     end
                 end
+                IDLE: begin
+                    data_valid_out <= 0;
+                    if (new_frame) begin
+                        state <= STORE;
+                    end
+                end
                 default: begin
-                    state <= STORE;
+                    state <= IDLE;
                 end
             endcase
         end

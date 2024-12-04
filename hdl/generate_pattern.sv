@@ -128,9 +128,7 @@ module generate_pattern (
             for (int i=0; i<7; i=i+1) begin
                 pattern_temp[i] <= 0;
             end
-            for (int i=0; i<6; i=i+1) begin
-                pattern_valid_pipe[i] <= 0;
-            end
+            pattern_valid_pipe[0] <= 0;
             segment_state <= 8'b0000_0001;
             segment_counter <= 0;
         end else begin
