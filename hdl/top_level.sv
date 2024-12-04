@@ -588,6 +588,30 @@ module top_level (
         );
     // }}}
 
+	// MARK: pattern eval {{{
+	// TODO hook up to real positions after Kmeans is done
+	logic eval_out;
+	logic [14:0] pattern_error;
+	logic pattern_correct;
+	pattern_evaluation
+	#(
+		.THRESHOLD(100)
+	) pattern_evaluator
+	(
+		.clk_in(clk_pixel), // TODO what clock rate?
+		.rst_in(sys_rst_pixel),
+		.data_valid_in(pattern_valid && 1), // TODO replace with valid bit of kmeans
+		.num_balls(3), // TODO replace with num_balls
+		.model_balls_x(traj_x_out),
+		.model_balls_y(traj_y_out),
+		.real_balls_x(traj_x_out), // TODO replace with output of kmeans
+		.real_balls_y(traj_y_out), // TODO replace with output of kmeans
+		.data_valid_out(eval_out),
+		.pattern_error(pattern_error),
+		.pattern_correct(pattern_correct)
+	);
+	// }}}
+
     // HDMI video signal generator
     video_sig_gen vsg (
         .pixel_clk_in(clk_pixel),
