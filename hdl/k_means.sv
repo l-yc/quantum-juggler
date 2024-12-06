@@ -19,7 +19,7 @@ module k_means #(parameter MAX_ITER = 20) (
     localparam WIDTH = 320;
     localparam HEIGHT = 180;
     localparam BRAM_WIDTH = 64;
-    localparam SUM_WIDTH = 8;
+    localparam SUM_WIDTH = 4;
 
     enum logic [1:0] {
         STORE = 0,
@@ -28,7 +28,7 @@ module k_means #(parameter MAX_ITER = 20) (
         IDLE = 3
     } state;
 
-    logic [3:0] update_state;
+    logic [$clog2(BRAM_WIDTH/SUM_WIDTH+3)-1:0] update_state;
 
     logic [8:0] x_read;
     logic [7:0] y_read;
@@ -147,23 +147,15 @@ module k_means #(parameter MAX_ITER = 20) (
     endgenerate
  
     // Sum up all the values 
-    logic [8:0] x_sum_comb_1 [3:0][6:0];
-    logic [3:0] total_mass_comb_1 [3:0][6:0];
-    logic [8:0] x_sum_comb_3_1 [1:0][6:0];
-    logic [3:0] total_mass_comb_3_1 [1:0][6:0];
-    logic [8:0] x_sum_comb_3_2 [6:0];
-    logic [3:0] total_mass_comb_3_2 [6:0];
+    logic [8:0] x_sum_1 [1:0][6:0];
+    logic [3:0] total_mass_1 [1:0][6:0];
+    logic [8:0] x_sum_2 [6:0];
+    logic [3:0] total_mass_2 [6:0];
 
     always_comb begin
-        for (int i=0; i<2; i=i+1) begin
-            for (int j=0; j<7; j=j+1) begin
-                x_sum_comb_3_1[i][j] = x_sum_comb_1[2*i][j] + x_sum_comb_1[2*i+1][j];
-                total_mass_comb_3_1[i][j] = total_mass_comb_1[2*i][j] + total_mass_comb_1[2*i+1][j];
-            end
-        end
         for (int j=0; j<7; j=j+1) begin
-            x_sum_comb_3_2[j] = x_sum_comb_3_1[0][j] + x_sum_comb_3_1[1][j];
-            total_mass_comb_3_2[j] = total_mass_comb_3_1[0][j] + total_mass_comb_3_1[1][j];
+            x_sum_2[j] = x_sum_1[0][j] + x_sum_1[1][j];
+            total_mass_2[j] = total_mass_1[0][j] + total_mass_1[1][j];
         end
     end
 
@@ -228,11 +220,11 @@ module k_means #(parameter MAX_ITER = 20) (
                     if (3 <= update_state && update_state < BRAM_WIDTH/SUM_WIDTH+3) begin
                         for (int i=0; i<SUM_WIDTH/2; i=i+1) begin
                             for (int j=0; j<7; j=j+1) begin
-                                x_sum_comb_1[i][j] <= (
+                                x_sum_1[i][j] <= (
                                     ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] == 1'b1 && j == min_index[2*i]) ? 2*i+(update_state-3)*SUM_WIDTH : 0) + 
                                     ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] == 1'b1 && j == min_index[2*i+1]) ? 2*i+(update_state-3)*SUM_WIDTH+1 : 0)
                                 );
-                                total_mass_comb_1[i][j] <= (
+                                total_mass_1[i][j] <= (
                                     (curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] && j == min_index[2*i]) + 
                                     (curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] && j == min_index[2*i+1])
                                 );
@@ -243,9 +235,9 @@ module k_means #(parameter MAX_ITER = 20) (
                     // Accumulate x sum
                     if (4 <= update_state && update_state <= BRAM_WIDTH/SUM_WIDTH+3) begin
                         for (int i=0; i<7; i=i+1) begin
-                            x_sum[i] <= x_sum_comb_3_2[i] + x_read * total_mass_comb_3_2[i] + x_sum[i];
-                            y_sum[i] <= total_mass_comb_3_2[i] * y_read + y_sum[i];
-                            total_mass[i] <= total_mass_comb_3_2[i] + total_mass[i];
+                            x_sum[i] <= x_sum_2[i] + x_read * total_mass_2[i] + x_sum[i];
+                            y_sum[i] <= total_mass_2[i] * y_read + y_sum[i];
+                            total_mass[i] <= total_mass_2[i] + total_mass[i];
                         end
                     end
 
