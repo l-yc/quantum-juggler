@@ -580,7 +580,7 @@ module top_level (
 			.nf_in(nf_hdmi),
             .pattern(siteswap_pattern),
             .pattern_valid(pattern_valid),
-            .num_balls(3), // TODO replace with num balls
+            .num_balls(num_balls),
             .hand_x_in({700, 500}), // TODO replace with hands
             .hand_y_in({719, 719}), // TODO replace with hands
             .frame_per_beat(5),
@@ -598,7 +598,7 @@ module top_level (
             .clk_in(clk_pixel),
             .rst_in(sys_rst_pixel),
 
-            .num_balls(3), // TODO replace with num balls
+            .num_balls(num_balls), // TODO replace with num balls
             .traj_x_in(traj_x_out),
             .traj_y_in(traj_y_out),
             //.traj_valid(traj_valid),
@@ -626,16 +626,22 @@ module top_level (
 	(
 		.clk_in(clk_pixel), // TODO what clock rate?
 		.rst_in(sys_rst_pixel),
-		.data_valid_in(pattern_valid && 1), // TODO replace with valid bit of kmeans
-		.num_balls(3), // TODO replace with num_balls
+		.data_valid_in(pattern_valid && k_means_valid),
+		.num_balls(num_balls), // TODO replace with num_balls
 		.model_balls_x(traj_x_out),
 		.model_balls_y(traj_y_out),
-		.real_balls_x(traj_x_out), // TODO replace with output of kmeans
-		.real_balls_y(traj_y_out), // TODO replace with output of kmeans
+		.real_balls_x(centroids_x),
+		.real_balls_y(centroids_y),
 		.data_valid_out(eval_out),
 		.pattern_error(pattern_error),
 		.pattern_correct(pattern_correct)
 	);
+
+    logic is_judgment;
+	localparam BORDER = 16;
+    assign is_judgment =
+		hcount_hdmi < BORDER || hcount_hdmi > 1280 - BORDER || 
+		vcount_hdmi < BORDER || vcount_hdmi > 720 - BORDER;
 	// }}}
 
     // HDMI video signal generator
@@ -657,9 +663,10 @@ module top_level (
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .sel_channel_in(selected_channel),
         .thresholded_pixel_in(mask),
-		//.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-		.trajectory_pixel_in(0),
+		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
+		.judgment_correct(pattern_correct),
+        .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
 
     //-------------- HDMI OUTPUT --------------//

@@ -9,6 +9,8 @@ module video_mux (
     input wire thresholded_pixel_in,
     input wire [23:0] trajectory_pixel_in,
     input wire crosshair_in,
+    input wire judgment_correct,
+    input wire judgment_in,
     output logic [23:0] pixel_out
 );
 
@@ -24,7 +26,13 @@ module video_mux (
     always_comb begin
         if (target_in)
 			//l_2 = (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
-            l_2 = crosshair_in ? 24'h00FF00 : l_1;
+            //l_2 = crosshair_in ? 24'h00FF00 : l_1;
+            //l_2 = crosshair_in ? 24'h00FF00 : (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
+            l_2 = 
+				judgment_in ? (judgment_correct ? 24'h0000FF : 24'hFF0000) :
+				crosshair_in ? 24'h00FF00 :
+				(trajectory_pixel_in > 0) ? trajectory_pixel_in :
+				l_1;
         else
             l_2 = l_1;
     end

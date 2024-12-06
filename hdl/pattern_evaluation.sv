@@ -18,7 +18,7 @@ module pattern_evaluation
 	);
 
 	// FIXME decide on the bit widths
-	logic [31:0] A[6:0][6:0];
+	logic [22:0] A[6:0][6:0];
 	always_comb begin
 		for (integer i = 0; i <= 7; ++i) begin
 			for (integer j = 0; j <= 7; ++j) begin
@@ -55,18 +55,18 @@ module pattern_evaluation
 	} state_t;
 	logic [3:0] prev, state, next;
 
-    logic [31:0] u [7:0];
-    logic [31:0] v [7:0];
-    logic [31:0] p [7:0];
-    logic [31:0] way [7:0];
-	logic [31:0] i;
-	logic [31:0] j;
-	logic [31:0] j0;
-    logic signed [31:0] minv [7:0];
+    logic [22:0] u [7:0];
+    logic [22:0] v [7:0];
+    logic [2:0] p [7:0];
+    logic [2:0] way [7:0];
+	logic [2:0] i;
+	logic [2:0] j;
+	logic [2:0] j0;
+    logic signed [22:0] minv [7:0];
     logic used [7:0];
-	logic [31:0] i0;
-	logic signed [31:0] delta;
-	logic [31:0] j1;
+	logic [2:0] i0;
+	logic signed [22:0] delta;
+	logic [2:0] j1;
     logic [2:0] ans [6:0]; // permutation corr. to best matching
 
 	always_comb begin
@@ -192,71 +192,69 @@ module pattern_evaluation
 		state <= next;
 	end
 
-	logic [31:0] debug_ans0;
-	logic [31:0] debug_ans1;
-	logic [31:0] debug_ans2;
-	logic [31:0] debug_ans3;
-	logic [31:0] debug_ans4;
-	logic [31:0] debug_ans5;
-	logic [31:0] debug_ans6;
-	assign debug_ans0 = ans[0];
-	assign debug_ans1 = ans[1];
-	assign debug_ans2 = ans[2];
-	assign debug_ans3 = ans[3];
-	assign debug_ans4 = ans[4];
-	assign debug_ans5 = ans[5];
-	assign debug_ans6 = ans[6];
+	//logic [31:0] debug_ans0;
+	//logic [31:0] debug_ans1;
+	//logic [31:0] debug_ans2;
+	//logic [31:0] debug_ans3;
+	//logic [31:0] debug_ans4;
+	//logic [31:0] debug_ans5;
+	//logic [31:0] debug_ans6;
+	//assign debug_ans0 = ans[0];
+	//assign debug_ans1 = ans[1];
+	//assign debug_ans2 = ans[2];
+	//assign debug_ans3 = ans[3];
+	//assign debug_ans4 = ans[4];
+	//assign debug_ans5 = ans[5];
+	//assign debug_ans6 = ans[6];
 
-	logic [31:0] debug_u0;
-	logic [31:0] debug_u1;
-	logic [31:0] debug_u2;
-	logic [31:0] debug_u3;
-	logic [31:0] debug_u4;
-	logic [31:0] debug_u5;
-	logic [31:0] debug_u6;
-	assign debug_u0 = u[0];
-	assign debug_u1 = u[1];
-	assign debug_u2 = u[2];
-	assign debug_u3 = u[3];
-	assign debug_u4 = u[4];
-	assign debug_u5 = u[5];
-	assign debug_u6 = u[6];
-
-
-	logic [31:0] debug_v0;
-	logic [31:0] debug_v1;
-	logic [31:0] debug_v2;
-	logic [31:0] debug_v3;
-	logic [31:0] debug_v4;
-	logic [31:0] debug_v5;
-	logic [31:0] debug_v6;
-	assign debug_v0 = v[0];
-	assign debug_v1 = v[1];
-	assign debug_v2 = v[2];
-	assign debug_v3 = v[3];
-	assign debug_v4 = v[4];
-	assign debug_v5 = v[5];
-	assign debug_v6 = v[6];
-
-	logic [32:1] debug_A11;
-	logic [32:1] debug_A12;
-	logic [32:1] debug_A13;
-	logic [32:1] debug_A21;
-	logic [32:1] debug_A22;
-	logic [32:1] debug_A23;
-	logic [32:1] debug_A31;
-	logic [32:1] debug_A32;
-	logic [32:1] debug_A33;
-	assign debug_A11 = A[1][1];
-	assign debug_A12 = A[1][2];
-	assign debug_A13 = A[1][3];
-	assign debug_A21 = A[2][1];
-	assign debug_A22 = A[2][2];
-	assign debug_A23 = A[2][3];
-	assign debug_A31 = A[3][1];
-	assign debug_A32 = A[3][2];
-	assign debug_A33 = A[3][3];
+	//logic [31:0] debug_u0;
+	//logic [31:0] debug_u1;
+	//logic [31:0] debug_u2;
+	//logic [31:0] debug_u3;
+	//logic [31:0] debug_u4;
+	//logic [31:0] debug_u5;
+	//logic [31:0] debug_u6;
+	//assign debug_u0 = u[0];
+	//assign debug_u1 = u[1];
+	//assign debug_u2 = u[2];
+	//assign debug_u3 = u[3];
+	//assign debug_u4 = u[4];
+	//assign debug_u5 = u[5];
+	//assign debug_u6 = u[6];
 
 
+	//logic [31:0] debug_v0;
+	//logic [31:0] debug_v1;
+	//logic [31:0] debug_v2;
+	//logic [31:0] debug_v3;
+	//logic [31:0] debug_v4;
+	//logic [31:0] debug_v5;
+	//logic [31:0] debug_v6;
+	//assign debug_v0 = v[0];
+	//assign debug_v1 = v[1];
+	//assign debug_v2 = v[2];
+	//assign debug_v3 = v[3];
+	//assign debug_v4 = v[4];
+	//assign debug_v5 = v[5];
+	//assign debug_v6 = v[6];
+
+	//logic [32:1] debug_A11;
+	//logic [32:1] debug_A12;
+	//logic [32:1] debug_A13;
+	//logic [32:1] debug_A21;
+	//logic [32:1] debug_A22;
+	//logic [32:1] debug_A23;
+	//logic [32:1] debug_A31;
+	//logic [32:1] debug_A32;
+	//logic [32:1] debug_A33;
+	//assign debug_A11 = A[1][1];
+	//assign debug_A12 = A[1][2];
+	//assign debug_A13 = A[1][3];
+	//assign debug_A21 = A[2][1];
+	//assign debug_A22 = A[2][2];
+	//assign debug_A23 = A[2][3];
+	//assign debug_A31 = A[3][1];
+	//assign debug_A32 = A[3][2];
+	//assign debug_A33 = A[3][3];
 endmodule
 `default_nettype wire

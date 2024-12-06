@@ -20,12 +20,12 @@ module trajectory_generator
 	);
 
 	// MARK: calculate look up tables
-	logic [31:0] distance;
+	logic [10:0] distance;
 	assign distance = hand_x_in[1] - hand_x_in[0];
 
-	logic [31:0] max_t[7:0];
-	logic [31:0] vx[7:0];
-	logic [31:0] vy[7:0];
+	logic [17:0] max_t[7:0];
+	logic [10:0] vx[7:0];
+	logic [20:0] vy[7:0];
 	logic [7:0] vx_ready;
 
 	generate
@@ -93,16 +93,14 @@ module trajectory_generator
 
 
 	// FIXME think through how many bits we actually need... 
-	//logic [11:0] t_start[6:0];
-	logic [31:0] t_start[6:0];
-	logic [31:0] hand[6:0];
-	logic [31:0] throw[6:0];
-	//logic [11:0] t;
-	logic [31:0] t;
-	logic [31:0] hidx;
-	logic [31:0] pidx;
-	logic [31:0] queue[6:0];
-	logic [31:0] counter;
+	logic [11:0] t_start[6:0];
+	logic hand[6:0];
+	logic [2:0] throw[6:0];
+	logic [11:0] t;
+	logic hidx;
+	logic [2:0] pidx;
+	logic [2:0] queue[6:0];
+	logic [14:0] counter;
     always_ff @(posedge clk_in) begin
 		case (state)
 			IDLE: begin
@@ -197,148 +195,148 @@ module trajectory_generator
     end
 
 
-	// debug
-	logic [31:0] debug0;
-	logic [10:0] debug1;
-	logic [31:0] debug2;
-	logic [31:0] debug3;
-	logic [31:0] debug4;
-	logic [31:0] debug5;
-	logic [31:0] debug6;
-	assign debug0 = hand[0]; // 32 bits
-	assign debug1 = _hand_x_in[0]; // 11 bits
-	assign debug2 = _hand_x_in[1]; // 11 bits
-	assign debug3 = vx[throw[0]]; // 32 bits
-	assign debug4 = t - t_start[0]; // 32 bits
-	assign debug5 = _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]);
-	assign debug6 = hand[0] == 0 ? _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]) : _hand_x_in[1] - vx[throw[0]] * (t - t_start[0]);
+	//// debug
+	//logic [31:0] debug0;
+	//logic [10:0] debug1;
+	//logic [31:0] debug2;
+	//logic [31:0] debug3;
+	//logic [31:0] debug4;
+	//logic [31:0] debug5;
+	//logic [31:0] debug6;
+	//assign debug0 = hand[0]; // 32 bits
+	//assign debug1 = _hand_x_in[0]; // 11 bits
+	//assign debug2 = _hand_x_in[1]; // 11 bits
+	//assign debug3 = vx[throw[0]]; // 32 bits
+	//assign debug4 = t - t_start[0]; // 32 bits
+	//assign debug5 = _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]);
+	//assign debug6 = hand[0] == 0 ? _hand_x_in[0] + vx[throw[0]] * (t - t_start[0]) : _hand_x_in[1] - vx[throw[0]] * (t - t_start[0]);
 
 
-	logic [31:0] t_start0;
-	logic [31:0] t_start1;
-	logic [31:0] t_start2;
-	logic [31:0] t_start3;
-	logic [31:0] t_start4;
-	logic [31:0] t_start5;
-	logic [31:0] t_start6;
-	assign t_start0 = t_start[0];
-	assign t_start1 = t_start[1];
-	assign t_start2 = t_start[2];
-	assign t_start3 = t_start[3];
-	assign t_start4 = t_start[4];
-	assign t_start5 = t_start[5];
-	assign t_start6 = t_start[6];
+	//logic [31:0] t_start0;
+	//logic [31:0] t_start1;
+	//logic [31:0] t_start2;
+	//logic [31:0] t_start3;
+	//logic [31:0] t_start4;
+	//logic [31:0] t_start5;
+	//logic [31:0] t_start6;
+	//assign t_start0 = t_start[0];
+	//assign t_start1 = t_start[1];
+	//assign t_start2 = t_start[2];
+	//assign t_start3 = t_start[3];
+	//assign t_start4 = t_start[4];
+	//assign t_start5 = t_start[5];
+	//assign t_start6 = t_start[6];
 
-	logic [31:0] throw0;
-	logic [31:0] throw1;
-	logic [31:0] throw2;
-	logic [31:0] throw3;
-	logic [31:0] throw4;
-	logic [31:0] throw5;
-	logic [31:0] throw6;
-	assign throw0 = throw[0];
-	assign throw1 = throw[1];
-	assign throw2 = throw[2];
-	assign throw3 = throw[3];
-	assign throw4 = throw[4];
-	assign throw5 = throw[5];
-	assign throw6 = throw[6];
+	//logic [31:0] throw0;
+	//logic [31:0] throw1;
+	//logic [31:0] throw2;
+	//logic [31:0] throw3;
+	//logic [31:0] throw4;
+	//logic [31:0] throw5;
+	//logic [31:0] throw6;
+	//assign throw0 = throw[0];
+	//assign throw1 = throw[1];
+	//assign throw2 = throw[2];
+	//assign throw3 = throw[3];
+	//assign throw4 = throw[4];
+	//assign throw5 = throw[5];
+	//assign throw6 = throw[6];
 
-	logic [31:0] traj_x_out0;
-	logic [31:0] traj_x_out1;
-	logic [31:0] traj_x_out2;
-	logic [31:0] traj_x_out3;
-	logic [31:0] traj_x_out4;
-	logic [31:0] traj_x_out5;
-	logic [31:0] traj_x_out6;
-	assign traj_x_out0 = traj_x_out[0];
-	assign traj_x_out1 = traj_x_out[1];
-	assign traj_x_out2 = traj_x_out[2];
-	assign traj_x_out3 = traj_x_out[3];
-	assign traj_x_out4 = traj_x_out[4];
-	assign traj_x_out5 = traj_x_out[5];
-	assign traj_x_out6 = traj_x_out[6];
+	//logic [31:0] traj_x_out0;
+	//logic [31:0] traj_x_out1;
+	//logic [31:0] traj_x_out2;
+	//logic [31:0] traj_x_out3;
+	//logic [31:0] traj_x_out4;
+	//logic [31:0] traj_x_out5;
+	//logic [31:0] traj_x_out6;
+	//assign traj_x_out0 = traj_x_out[0];
+	//assign traj_x_out1 = traj_x_out[1];
+	//assign traj_x_out2 = traj_x_out[2];
+	//assign traj_x_out3 = traj_x_out[3];
+	//assign traj_x_out4 = traj_x_out[4];
+	//assign traj_x_out5 = traj_x_out[5];
+	//assign traj_x_out6 = traj_x_out[6];
 
-	logic [31:0] traj_y_out0;
-	logic [31:0] traj_y_out1;
-	logic [31:0] traj_y_out2;
-	logic [31:0] traj_y_out3;
-	logic [31:0] traj_y_out4;
-	logic [31:0] traj_y_out5;
-	logic [31:0] traj_y_out6;
-	assign traj_y_out0 = traj_y_out[0];
-	assign traj_y_out1 = traj_y_out[1];
-	assign traj_y_out2 = traj_y_out[2];
-	assign traj_y_out3 = traj_y_out[3];
-	assign traj_y_out4 = traj_y_out[4];
-	assign traj_y_out5 = traj_y_out[5];
-	assign traj_y_out6 = traj_y_out[6];
+	//logic [31:0] traj_y_out0;
+	//logic [31:0] traj_y_out1;
+	//logic [31:0] traj_y_out2;
+	//logic [31:0] traj_y_out3;
+	//logic [31:0] traj_y_out4;
+	//logic [31:0] traj_y_out5;
+	//logic [31:0] traj_y_out6;
+	//assign traj_y_out0 = traj_y_out[0];
+	//assign traj_y_out1 = traj_y_out[1];
+	//assign traj_y_out2 = traj_y_out[2];
+	//assign traj_y_out3 = traj_y_out[3];
+	//assign traj_y_out4 = traj_y_out[4];
+	//assign traj_y_out5 = traj_y_out[5];
+	//assign traj_y_out6 = traj_y_out[6];
 
-	logic [31:0] vx0;
-	logic [31:0] vx1;
-	logic [31:0] vx2;
-	logic [31:0] vx3;
-	logic [31:0] vx4;
-	logic [31:0] vx5;
-	logic [31:0] vx6;
-	logic [31:0] vx7;
-	assign vx0 = vx[0];
-	assign vx1 = vx[1];
-	assign vx2 = vx[2];
-	assign vx3 = vx[3];
-	assign vx4 = vx[4];
-	assign vx5 = vx[5];
-	assign vx6 = vx[6];
-	assign vx7 = vx[7];
+	//logic [31:0] vx0;
+	//logic [31:0] vx1;
+	//logic [31:0] vx2;
+	//logic [31:0] vx3;
+	//logic [31:0] vx4;
+	//logic [31:0] vx5;
+	//logic [31:0] vx6;
+	//logic [31:0] vx7;
+	//assign vx0 = vx[0];
+	//assign vx1 = vx[1];
+	//assign vx2 = vx[2];
+	//assign vx3 = vx[3];
+	//assign vx4 = vx[4];
+	//assign vx5 = vx[5];
+	//assign vx6 = vx[6];
+	//assign vx7 = vx[7];
 
-	//logic [31:0] vy0;
-	//logic [31:0] vy1;
-	//logic [31:0] vy2;
-	//logic [31:0] vy3;
-	//logic [31:0] vy4;
-	//logic [31:0] vy5;
-	//logic [31:0] vy6;
-	//logic [31:0] vy7;
-	//assign vy0 = vy[0];
-	//assign vy1 = vy[1];
-	//assign vy2 = vy[2];
-	//assign vy3 = vy[3];
-	//assign vy4 = vy[4];
-	//assign vy5 = vy[5];
-	//assign vy6 = vy[6];
-	//assign vy7 = vy[7];
-
-
-	logic [31:0] queue0;
-	logic [31:0] queue1;
-	logic [31:0] queue2;
-	logic [31:0] queue3;
-	logic [31:0] queue4;
-	logic [31:0] queue5;
-	logic [31:0] queue6;
-	assign queue0 = queue[0];
-	assign queue1 = queue[1];
-	assign queue2 = queue[2];
-	assign queue3 = queue[3];
-	assign queue4 = queue[4];
-	assign queue5 = queue[5];
-	assign queue6 = queue[6];
+	////logic [31:0] vy0;
+	////logic [31:0] vy1;
+	////logic [31:0] vy2;
+	////logic [31:0] vy3;
+	////logic [31:0] vy4;
+	////logic [31:0] vy5;
+	////logic [31:0] vy6;
+	////logic [31:0] vy7;
+	////assign vy0 = vy[0];
+	////assign vy1 = vy[1];
+	////assign vy2 = vy[2];
+	////assign vy3 = vy[3];
+	////assign vy4 = vy[4];
+	////assign vy5 = vy[5];
+	////assign vy6 = vy[6];
+	////assign vy7 = vy[7];
 
 
+	//logic [31:0] queue0;
+	//logic [31:0] queue1;
+	//logic [31:0] queue2;
+	//logic [31:0] queue3;
+	//logic [31:0] queue4;
+	//logic [31:0] queue5;
+	//logic [31:0] queue6;
+	//assign queue0 = queue[0];
+	//assign queue1 = queue[1];
+	//assign queue2 = queue[2];
+	//assign queue3 = queue[3];
+	//assign queue4 = queue[4];
+	//assign queue5 = queue[5];
+	//assign queue6 = queue[6];
 
-	logic [31:0] hand0;
-	logic [31:0] hand1;
-	logic [31:0] hand2;
-	logic [31:0] hand3;
-	logic [31:0] hand4;
-	logic [31:0] hand5;
-	logic [31:0] hand6;
-	assign hand0 = hand[0];
-	assign hand1 = hand[1];
-	assign hand2 = hand[2];
-	assign hand3 = hand[3];
-	assign hand4 = hand[4];
-	assign hand5 = hand[5];
-	assign hand6 = hand[6];
+
+
+	//logic [31:0] hand0;
+	//logic [31:0] hand1;
+	//logic [31:0] hand2;
+	//logic [31:0] hand3;
+	//logic [31:0] hand4;
+	//logic [31:0] hand5;
+	//logic [31:0] hand6;
+	//assign hand0 = hand[0];
+	//assign hand1 = hand[1];
+	//assign hand2 = hand[2];
+	//assign hand3 = hand[3];
+	//assign hand4 = hand[4];
+	//assign hand5 = hand[5];
+	//assign hand6 = hand[6];
 endmodule
 `default_nettype wire
