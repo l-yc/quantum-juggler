@@ -39,7 +39,12 @@ module top_level (
     output wire         ddr3_ck_n,
     output wire         ddr3_cke,
     output wire [1:0]   ddr3_dm,
-    output wire         ddr3_odt
+    output wire         ddr3_odt,
+    // potentiometer
+    input wire cipo,
+    output logic dclk,
+    output logic copi,
+    output logic cs
     );
 
     // Clock and Reset Signals
@@ -621,6 +626,50 @@ module top_level (
 
     //-------------- END K MEANS CLUSTERING --------------//
 
+    //-------------- POTENTIOMETER STUFF HERE --------------//
+    
+    parameter ADC_DATA_WIDTH = 17; 
+    parameter ADC_DATA_CLK_PERIOD = 50; 
+    
+    parameter ADC_READ_PERIOD = 100_000; //read one channel of ADC every millisec
+    
+    //SPI interface controls
+    logic [ADC_DATA_WIDTH-1:0] spi_write_data;
+    logic [ADC_DATA_WIDTH-1:0] spi_read_data;
+    logic spi_trigger;
+    logic spi_read_data_valid;
+    logic [7:0] frame_per_beat;
+    
+    //built in previous section:
+    spi_con
+    #(   .DATA_WIDTH(ADC_DATA_WIDTH),
+        .DATA_CLK_PERIOD(ADC_DATA_CLK_PERIOD)
+    )my_spi_con
+    ( .clk_in(clk_100mhz),
+        .rst_in(sys_rst_pixel),
+        .data_in(17'b11000_0000_0000_0000),
+        .trigger_in(spi_trigger),
+        .data_out(spi_read_data),
+        .data_valid_out(spi_read_data_valid), //high when output data is present.
+        .chip_data_out(copi), //(serial dout preferably)
+        .chip_data_in(cipo), //(serial din preferably)
+        .chip_clk_out(dclk),
+        .chip_sel_out(cs)
+        );
+    
+    always_ff @(posedge clk_100mhz)begin
+        if (spi_read_data_valid)begin//if the SPI has received message back:
+            frame_per_beat <= spi_read_data[9:2];
+            spi_trigger <= 1; //trigger spi transaction (channel read based on case above)
+        end else begin
+            spi_trigger <= 0;
+        end
+    end
+
+    //-------------- END POTENTIOMETER --------------//
+
+
+
 	// MARK: trajectory modules {{{
 	logic [10:0] traj_x_out[6:0];
 	logic [9:0] traj_y_out[6:0];
@@ -638,7 +687,7 @@ module top_level (
             .num_balls(num_balls),
             .hand_x_in({700, 500}), // TODO replace with hands
             .hand_y_in({719, 719}), // TODO replace with hands
-            .frame_per_beat(5),
+            .frame_per_beat({7'b0, frame_per_beat}),
             .traj_x_out(traj_x_out),
             .traj_y_out(traj_y_out),
             .traj_valid(traj_valid)
