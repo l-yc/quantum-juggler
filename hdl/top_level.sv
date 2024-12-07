@@ -623,41 +623,64 @@ module top_level (
     //    ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
     //    ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
     //    ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
-	logic is_crosshair;
+
+	    // Crosshair output
+    logic is_crosshair;
     logic is_crosshair_hands;
     assign is_crosshair = (
-        (((vcount_hdmi == centroids_y[0] && ((hcount_hdmi > centroids_x[0]) ? hcount_hdmi - centroids_x[0] : centroids_x[0] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[0] && ((vcount_hdmi > centroids_y[0]) ? vcount_hdmi - centroids_y[0] : centroids_y[0] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[0]) ? vcount_hdmi - centroids_y[0] : centroids_y[0] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[0]) ? hcount_hdmi - centroids_x[0] : centroids_x[0] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[0]) ? hcount_hdmi - centroids_x[0] : centroids_x[0] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[0]) ? vcount_hdmi - centroids_y[0] : centroids_y[0] - vcount_hdmi) <= 16)) &&
         num_balls >= 1) ||
-        (((vcount_hdmi == centroids_y[1] && ((hcount_hdmi > centroids_x[1]) ? hcount_hdmi - centroids_x[1] : centroids_x[1] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[1] && ((vcount_hdmi > centroids_y[1]) ? vcount_hdmi - centroids_y[1] : centroids_y[1] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[1]) ? vcount_hdmi - centroids_y[1] : centroids_y[1] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[1]) ? hcount_hdmi - centroids_x[1] : centroids_x[1] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[1]) ? hcount_hdmi - centroids_x[1] : centroids_x[1] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[1]) ? vcount_hdmi - centroids_y[1] : centroids_y[1] - vcount_hdmi) <= 16)) &&
         num_balls >= 2) ||
-        (((vcount_hdmi == centroids_y[2] && ((hcount_hdmi > centroids_x[2]) ? hcount_hdmi - centroids_x[2] : centroids_x[2] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[2] && ((vcount_hdmi > centroids_y[2]) ? vcount_hdmi - centroids_y[2] : centroids_y[2] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[2]) ? vcount_hdmi - centroids_y[2] : centroids_y[2] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[2]) ? hcount_hdmi - centroids_x[2] : centroids_x[2] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[2]) ? hcount_hdmi - centroids_x[2] : centroids_x[2] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[2]) ? vcount_hdmi - centroids_y[2] : centroids_y[2] - vcount_hdmi) <= 16)) &&
         num_balls >= 3) ||
-        (((vcount_hdmi == centroids_y[3] && ((hcount_hdmi > centroids_x[3]) ? hcount_hdmi - centroids_x[3] : centroids_x[3] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[3] && ((vcount_hdmi > centroids_y[3]) ? vcount_hdmi - centroids_y[3] : centroids_y[3] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[3]) ? vcount_hdmi - centroids_y[3] : centroids_y[3] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[3]) ? hcount_hdmi - centroids_x[3] : centroids_x[3] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[3]) ? hcount_hdmi - centroids_x[3] : centroids_x[3] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[3]) ? vcount_hdmi - centroids_y[3] : centroids_y[3] - vcount_hdmi) <= 16)) &&
         num_balls >= 4) ||
-        (((vcount_hdmi == centroids_y[4] && ((hcount_hdmi > centroids_x[4]) ? hcount_hdmi - centroids_x[4] : centroids_x[4] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[4] && ((vcount_hdmi > centroids_y[4]) ? vcount_hdmi - centroids_y[4] : centroids_y[4] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[4]) ? vcount_hdmi - centroids_y[4] : centroids_y[4] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[4]) ? hcount_hdmi - centroids_x[4] : centroids_x[4] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[4]) ? hcount_hdmi - centroids_x[4] : centroids_x[4] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[4]) ? vcount_hdmi - centroids_y[4] : centroids_y[4] - vcount_hdmi) <= 16)) &&
         num_balls >= 5) ||
-        (((vcount_hdmi == centroids_y[5] && ((hcount_hdmi > centroids_x[5]) ? hcount_hdmi - centroids_x[5] : centroids_x[5] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[5] && ((vcount_hdmi > centroids_y[5]) ? vcount_hdmi - centroids_y[5] : centroids_y[5] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[5]) ? vcount_hdmi - centroids_y[5] : centroids_y[5] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[5]) ? hcount_hdmi - centroids_x[5] : centroids_x[5] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[5]) ? hcount_hdmi - centroids_x[5] : centroids_x[5] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[5]) ? vcount_hdmi - centroids_y[5] : centroids_y[5] - vcount_hdmi) <= 16)) &&
         num_balls >= 6) ||
-        (((vcount_hdmi == centroids_y[6] && ((hcount_hdmi > centroids_x[6]) ? hcount_hdmi - centroids_x[6] : centroids_x[6] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[6] && ((vcount_hdmi > centroids_y[6]) ? vcount_hdmi - centroids_y[6] : centroids_y[6] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[6]) ? vcount_hdmi - centroids_y[6] : centroids_y[6] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[6]) ? hcount_hdmi - centroids_x[6] : centroids_x[6] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[6]) ? hcount_hdmi - centroids_x[6] : centroids_x[6] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[6]) ? vcount_hdmi - centroids_y[6] : centroids_y[6] - vcount_hdmi) <= 16)) &&
         num_balls >= 7) ||
-        (((vcount_hdmi == centroids_y[7] && ((hcount_hdmi > centroids_x[7]) ? hcount_hdmi - centroids_x[7] : centroids_x[7] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x[7] && ((vcount_hdmi > centroids_y[7]) ? vcount_hdmi - centroids_y[7] : centroids_y[7] - vcount_hdmi) <= 8)) &&
+        (((((vcount_hdmi > centroids_y[7]) ? vcount_hdmi - centroids_y[7] : centroids_y[7] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x[7]) ? hcount_hdmi - centroids_x[7] : centroids_x[7] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x[7]) ? hcount_hdmi - centroids_x[7] : centroids_x[7] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y[7]) ? vcount_hdmi - centroids_y[7] : centroids_y[7] - vcount_hdmi) <= 16)) &&
         num_balls >= 8)
-	);
+        );
+
 
     assign is_crosshair_hands = (
-        ((vcount_hdmi == centroids_y_hands[0] && ((hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x_hands[0] && ((vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi) <= 8)) ||
-        ((vcount_hdmi == centroids_y_hands[1] && ((hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi) <= 8) || 
-        (hcount_hdmi == centroids_x_hands[1] && ((vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi) <= 8))
-	);
+        ((((vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi) <= 2 && 
+        ((hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi) <= 16)) ||
+        ((((vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi) <= 16 && 
+        ((hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi) <= 16) || 
+        (((hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi) <= 2 && 
+        ((vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi) <= 16))
+        );
 	// }}} END CROSSHAIR
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
@@ -735,7 +758,7 @@ module top_level (
             .num_balls(num_balls),
             .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
             .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
-            .frame_per_beat(5),
+            .frame_per_beat(frame_per_beat),
             .traj_x_out(traj_x_out),
             .traj_y_out(traj_y_out),
             .traj_valid(traj_valid)
