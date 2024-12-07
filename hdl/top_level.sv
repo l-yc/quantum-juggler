@@ -533,7 +533,7 @@ module top_level (
         mask_hands <= (selected_channel_hands > lower_threshold_hands) && (selected_channel_hands <= upper_threshold_hands);
     end
 
-    //-------------- K MEANS CLUSTERING --------------//
+    //-------------- K MEANS CLUSTERING -------------- {{{ //
 
     logic [8:0] centroids_x_init [6:0];
     logic [7:0] centroids_y_init [6:0];
@@ -611,22 +611,58 @@ module top_level (
         end
     end
 
-    // Crosshair output
-    logic is_crosshair;
+    // Crosshair output {{{
+    //logic is_crosshair;
+    //assign is_crosshair = (
+    //    ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
+    //    (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
+    //    ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
+    //    (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
+    //    ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
+    //    ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
+    //    ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
+    //    ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
+    //    ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
+	logic is_crosshair;
+    logic is_crosshair_hands;
     assign is_crosshair = (
-        ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
-        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
-        ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
-        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
-        ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
-        ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
-        ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
-        ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
-        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
+        (((vcount_hdmi == centroids_y[0] && ((hcount_hdmi > centroids_x[0]) ? hcount_hdmi - centroids_x[0] : centroids_x[0] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[0] && ((vcount_hdmi > centroids_y[0]) ? vcount_hdmi - centroids_y[0] : centroids_y[0] - vcount_hdmi) <= 8)) &&
+        num_balls >= 1) ||
+        (((vcount_hdmi == centroids_y[1] && ((hcount_hdmi > centroids_x[1]) ? hcount_hdmi - centroids_x[1] : centroids_x[1] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[1] && ((vcount_hdmi > centroids_y[1]) ? vcount_hdmi - centroids_y[1] : centroids_y[1] - vcount_hdmi) <= 8)) &&
+        num_balls >= 2) ||
+        (((vcount_hdmi == centroids_y[2] && ((hcount_hdmi > centroids_x[2]) ? hcount_hdmi - centroids_x[2] : centroids_x[2] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[2] && ((vcount_hdmi > centroids_y[2]) ? vcount_hdmi - centroids_y[2] : centroids_y[2] - vcount_hdmi) <= 8)) &&
+        num_balls >= 3) ||
+        (((vcount_hdmi == centroids_y[3] && ((hcount_hdmi > centroids_x[3]) ? hcount_hdmi - centroids_x[3] : centroids_x[3] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[3] && ((vcount_hdmi > centroids_y[3]) ? vcount_hdmi - centroids_y[3] : centroids_y[3] - vcount_hdmi) <= 8)) &&
+        num_balls >= 4) ||
+        (((vcount_hdmi == centroids_y[4] && ((hcount_hdmi > centroids_x[4]) ? hcount_hdmi - centroids_x[4] : centroids_x[4] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[4] && ((vcount_hdmi > centroids_y[4]) ? vcount_hdmi - centroids_y[4] : centroids_y[4] - vcount_hdmi) <= 8)) &&
+        num_balls >= 5) ||
+        (((vcount_hdmi == centroids_y[5] && ((hcount_hdmi > centroids_x[5]) ? hcount_hdmi - centroids_x[5] : centroids_x[5] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[5] && ((vcount_hdmi > centroids_y[5]) ? vcount_hdmi - centroids_y[5] : centroids_y[5] - vcount_hdmi) <= 8)) &&
+        num_balls >= 6) ||
+        (((vcount_hdmi == centroids_y[6] && ((hcount_hdmi > centroids_x[6]) ? hcount_hdmi - centroids_x[6] : centroids_x[6] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[6] && ((vcount_hdmi > centroids_y[6]) ? vcount_hdmi - centroids_y[6] : centroids_y[6] - vcount_hdmi) <= 8)) &&
+        num_balls >= 7) ||
+        (((vcount_hdmi == centroids_y[7] && ((hcount_hdmi > centroids_x[7]) ? hcount_hdmi - centroids_x[7] : centroids_x[7] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x[7] && ((vcount_hdmi > centroids_y[7]) ? vcount_hdmi - centroids_y[7] : centroids_y[7] - vcount_hdmi) <= 8)) &&
+        num_balls >= 8)
+	);
 
-    //-------------- END K MEANS CLUSTERING --------------//
+    assign is_crosshair_hands = (
+        ((vcount_hdmi == centroids_y_hands[0] && ((hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x_hands[0] && ((vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi) <= 8)) ||
+        ((vcount_hdmi == centroids_y_hands[1] && ((hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi) <= 8) || 
+        (hcount_hdmi == centroids_x_hands[1] && ((vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi) <= 8))
+	);
+	// }}} END CROSSHAIR
 
-    //-------------- POTENTIOMETER STUFF HERE --------------//
+    //}}} -------------- END K MEANS CLUSTERING --------------//
+
+	//-------------- POTENTIOMETER STUFF HERE -------------- {{{//
     
     parameter ADC_DATA_WIDTH = 17; 
     parameter ADC_DATA_CLK_PERIOD = 50; 
@@ -645,7 +681,7 @@ module top_level (
     #(   .DATA_WIDTH(ADC_DATA_WIDTH),
         .DATA_CLK_PERIOD(ADC_DATA_CLK_PERIOD)
     )my_spi_con
-    ( .clk_in(clk_100mhz),
+    ( .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .data_in(17'b11000_0000_0000_0000),
         .trigger_in(spi_trigger),
@@ -656,17 +692,29 @@ module top_level (
         .chip_clk_out(dclk),
         .chip_sel_out(cs)
         );
+
+    //counter from week 1. that will count up and we'll use for triggering
+    logic [31:0] select_count;
+    counter //include your regular counter from week 1 in source!
+    select_counter
+    (  .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .period_in(ADC_READ_PERIOD),
+        .count_out(select_count)
+    );
     
-    always_ff @(posedge clk_100mhz)begin
-        if (spi_read_data_valid)begin//if the SPI has received message back:
-            frame_per_beat <= spi_read_data[9:2];
+    always_ff @(posedge clk_pixel)begin
+        if (spi_read_data_valid) begin//if the SPI has received message back:
+            frame_per_beat <= spi_read_data[9:4];
+        end
+        if (select_count=='d1)begin //once a millisecond select_count==1
             spi_trigger <= 1; //trigger spi transaction (channel read based on case above)
         end else begin
             spi_trigger <= 0;
         end
     end
 
-    //-------------- END POTENTIOMETER --------------//
+    //}}} -------------- END POTENTIOMETER --------------//
 
 
 
@@ -685,9 +733,9 @@ module top_level (
             .pattern(siteswap_pattern),
             .pattern_valid(pattern_valid),
             .num_balls(num_balls),
-            .hand_x_in({700, 500}), // TODO replace with hands
-            .hand_y_in({719, 719}), // TODO replace with hands
-            .frame_per_beat({7'b0, frame_per_beat}),
+            .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
+            .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
+            .frame_per_beat(5),
             .traj_x_out(traj_x_out),
             .traj_y_out(traj_y_out),
             .traj_valid(traj_valid)
@@ -702,13 +750,12 @@ module top_level (
             .clk_in(clk_pixel),
             .rst_in(sys_rst_pixel),
 
-            .num_balls(num_balls), // TODO replace with num balls
+            .num_balls(num_balls),
             .traj_x_in(traj_x_out),
             .traj_y_in(traj_y_out),
-            //.traj_valid(traj_valid),
-            .traj_valid(1),
-            .hand_x_in({1240, 40}), // TODO replace with hands
-            .hand_y_in({719, 719}), // TODO replace with hands
+            .traj_valid(traj_valid),
+            .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
+            .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
 
             .hcount_in(hcount_hdmi),
             .vcount_in(vcount_hdmi),
@@ -719,13 +766,12 @@ module top_level (
     // }}}
 
 	// MARK: pattern eval {{{
-	// TODO hook up to real positions after Kmeans is done
 	logic eval_out;
 	logic [14:0] pattern_error;
 	logic pattern_correct;
 	pattern_evaluation
 	#(
-		.THRESHOLD(100)
+		.THRESHOLD(512)
 	) pattern_evaluator
 	(
 		.clk_in(clk_pixel), // TODO what clock rate?
@@ -766,9 +812,11 @@ module top_level (
         .target_in(sw[15]),
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .sel_channel_in(selected_channel),
-        .thresholded_pixel_in(mask || mask_hands),
+        .thresholded_pixel_in(mask),
+        .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
+        .crosshair2_in(is_crosshair_hands),
 		.judgment_correct(pattern_correct),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));

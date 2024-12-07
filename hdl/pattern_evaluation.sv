@@ -1,7 +1,7 @@
 `default_nettype none
 module pattern_evaluation
 	#(
-		parameter THRESHOLD = 100
+		parameter THRESHOLD = 512
 	)
 	(
 		input wire clk_in, // TODO what clock rate?
@@ -183,7 +183,7 @@ module pattern_evaluation
 
 				data_valid_out <= 1;
 				pattern_error <= -$signed(v[0]);
-				pattern_correct <= (-$signed(v[0]) < THRESHOLD) ? 1 : 0;
+				pattern_correct <= (-$signed(v[0]) < THRESHOLD * num_balls) ? 1 : 0;
 			end
 			default: begin end
 		endcase

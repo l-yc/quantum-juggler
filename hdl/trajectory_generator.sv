@@ -21,7 +21,7 @@ module trajectory_generator
 
 	// MARK: calculate look up tables
 	logic [10:0] distance;
-	assign distance = hand_x_in[1] - hand_x_in[0];
+	assign distance = _hand_x_in[1] - _hand_x_in[0];
 
 	logic [17:0] max_t[7:0];
 	logic [10:0] vx[7:0];
@@ -91,6 +91,20 @@ module trajectory_generator
 	logic [9:0] _hand_y_in[1:0];
 	logic [14:0] _frame_per_beat;
 
+	always_comb begin
+		if (hand_x_in[0] < hand_x_in[1]) begin
+			_hand_x_in[0] = hand_x_in[0];
+			_hand_x_in[1] = hand_x_in[1];
+			_hand_y_in[0] = hand_y_in[0];
+			_hand_y_in[1] = hand_y_in[1];
+		end else begin
+			_hand_x_in[0] = hand_x_in[1];
+			_hand_x_in[1] = hand_x_in[0];
+			_hand_y_in[0] = hand_y_in[1];
+			_hand_y_in[1] = hand_y_in[0];
+		end
+		_frame_per_beat = frame_per_beat;
+	end
 
 	// FIXME think through how many bits we actually need... 
 	logic [11:0] t_start[6:0];
@@ -118,11 +132,12 @@ module trajectory_generator
 						_pattern[i] <= pattern[i];
 					end
 					_num_balls <= num_balls;
-					for (integer i = 0; i < 2; i += 1) begin
-						_hand_x_in[i] <= hand_x_in[i];
-						_hand_y_in[i] <= hand_y_in[i];
-					end
-					_frame_per_beat <= frame_per_beat;
+					// TODO live update
+					//for (integer i = 0; i < 2; i += 1) begin
+					//	_hand_x_in[i] <= hand_x_in[i];
+					//	_hand_y_in[i] <= hand_y_in[i];
+					//end
+					//_frame_per_beat <= frame_per_beat;
 
 					// logic
 					for (integer i = 0; i < 7; i += 1) begin

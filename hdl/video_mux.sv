@@ -7,8 +7,10 @@ module video_mux (
     input wire [23:0] camera_pixel_in, // 16 bits from camera 5:6:5
     input wire [7:0] sel_channel_in,   // y channel of ycrcb camera conversion
     input wire thresholded_pixel_in,
+    input wire thresholded2_pixel_in,
     input wire [23:0] trajectory_pixel_in,
     input wire crosshair_in,
+    input wire crosshair2_in,
     input wire judgment_correct,
     input wire judgment_in,
     output logic [23:0] pixel_out
@@ -17,7 +19,10 @@ module video_mux (
     logic [23:0] l_1;
     always_comb begin
         if (bg_in)
-            l_1 = (thresholded_pixel_in != 0) ? 24'hFF77AA : {sel_channel_in, sel_channel_in, sel_channel_in};
+            l_1 = 
+				(thresholded_pixel_in != 0) ? 24'h00FFFF : 
+				(thresholded2_pixel_in != 0) ? 24'hFF77AA : 
+				{sel_channel_in, sel_channel_in, sel_channel_in};
         else
             l_1 = camera_pixel_in;
     end
@@ -30,7 +35,8 @@ module video_mux (
             //l_2 = crosshair_in ? 24'h00FF00 : (trajectory_pixel_in > 0) ? trajectory_pixel_in : l_1;
             l_2 = 
 				judgment_in ? (judgment_correct ? 24'h0000FF : 24'hFF0000) :
-				crosshair_in ? 24'h00FF00 :
+				crosshair_in ? 24'hFF0000 :
+				crosshair2_in ? 24'h009966 :
 				(trajectory_pixel_in > 0) ? trajectory_pixel_in :
 				l_1;
         else
