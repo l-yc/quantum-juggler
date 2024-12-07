@@ -488,6 +488,7 @@ module top_level (
 
     // Channel select module (select which of six color channels to mask):
     logic [7:0] selected_channel;
+    logic [7:0] selected_channel_hands;
     channel_select mcs (
         .sel_in(3'b100), // select y value
         .r_in(fb_red_bram),
@@ -497,15 +498,34 @@ module top_level (
         .cr_in(cr),
         .cb_in(cb),
         .channel_out(selected_channel));
+    channel_select mcs_hands (
+        .sel_in(3'b101), // select y value
+        .r_in(fb_red_bram),
+        .g_in(fb_green_bram),
+        .b_in(fb_blue_bram),
+        .y_in(y),
+        .cr_in(cr),
+        .cb_in(cb),
+        .channel_out(selected_channel_hands));
 
     // Threshold module (apply masking threshold):
     logic [7:0] lower_threshold;
     logic [7:0] upper_threshold;
+    logic [7:0] lower_threshold_hands;
+    logic [7:0] upper_threshold_hands;
     logic mask;
-    assign lower_threshold = {sw[9:6], 4'b0};
-    assign upper_threshold = {sw[13:10], 4'b1111};
+    logic mask_hands;
+    // assign lower_threshold = {sw[9:6], 4'b0};
+    // assign upper_threshold = {sw[13:10], 4'b1111};
+    assign lower_threshold = 8'b11110000;
+    assign upper_threshold = 8'b11111111;
+    assign lower_threshold_hands = {sw[9:6], 4'b0};
+    assign upper_threshold_hands = {sw[13:10], 4'b1111};
+    // assign lower_threshold_hands = 8'b10100000;
+    // assign upper_threshold_hands = 8'b11111111;
     always_ff @(posedge clk_pixel) begin
         mask <= (selected_channel > lower_threshold) && (selected_channel <= upper_threshold);
+        mask_hands <= (selected_channel_hands > lower_threshold_hands) && (selected_channel_hands <= upper_threshold_hands);
     end
 
     //-------------- K MEANS CLUSTERING --------------//
@@ -532,10 +552,41 @@ module top_level (
         .centroids_x_out(centroids_x_calc),
         .centroids_y_out(centroids_y_calc));
 
+    logic [8:0] centroids_x_init_hands [6:0];
+    logic [7:0] centroids_y_init_hands [6:0];
+    logic k_means_valid_hands;
+    logic [8:0] centroids_x_calc_hands [6:0];
+    logic [7:0] centroids_y_calc_hands [6:0];
+    logic [10:0] centroids_x_hands [6:0];
+    logic [9:0] centroids_y_hands [6:0];
+
+    k_means k_means_inst_hands (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .centroids_x_in(centroids_x_init_hands),
+        .centroids_y_in(centroids_y_init_hands),
+        .x_in(hcount_hdmi[10:2]),
+        .y_in(vcount_hdmi[9:2]),
+        .num_balls(3'b010),
+        .data_valid_in(mask_hands && hcount_hdmi[1:0] == 0),
+        .new_frame(nf_hdmi),
+        .data_valid_out(k_means_valid_hands),
+        .centroids_x_out(centroids_x_calc_hands),
+        .centroids_y_out(centroids_y_calc_hands));
+
+
     always_ff @(posedge clk_pixel) begin
         for (int i=0; i<7; i=i+1) begin
             centroids_x_init[i] <= 20 + 40 * i;
             centroids_y_init[i] <= 90;
+        end
+        centroids_x_init_hands[0] <= 80;
+        centroids_y_init_hands[0] <= 240;
+        centroids_x_init_hands[1] <= 90;
+        centroids_y_init_hands[1] <= 90;
+        for (int i=2; i<7; i=i+1) begin
+            centroids_x_init_hands[i] <= 0;
+            centroids_y_init_hands[i] <= 0;
         end
 //        if (sys_rst_pixel) begin
 //            for (int i=0; i<7; i=i+1) begin
@@ -547,6 +598,8 @@ module top_level (
             for (int i=0; i<7; i=i+1) begin
                 centroids_x[i] <= {centroids_x_calc[i], 2'b0};
                 centroids_y[i] <= {centroids_y_calc[i], 2'b0};
+                centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
+                centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
             //centroids_x_init <= centroids_x_calc;
             //centroids_y_init <= centroids_y_calc;
@@ -557,7 +610,9 @@ module top_level (
     logic is_crosshair;
     assign is_crosshair = (
         ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
+        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
         ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
+        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
         ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
         ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
         ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
@@ -662,7 +717,7 @@ module top_level (
         .target_in(sw[15]),
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),
         .sel_channel_in(selected_channel),
-        .thresholded_pixel_in(mask),
+        .thresholded_pixel_in(mask || mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
 		.judgment_correct(pattern_correct),
