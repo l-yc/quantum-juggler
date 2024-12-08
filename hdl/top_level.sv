@@ -766,6 +766,7 @@ module top_level (
 
     // Video mux: select from the different display modes and output to TMDS
     video_mux mvm(
+        .clk_in(clk_pixel),
         .bg_in(sw[14]),
         .target_in(sw[15]),
         .camera_pixel_in({fb_red_dram, fb_green_dram, fb_blue_dram}),

@@ -2,6 +2,7 @@
 `default_nettype none
 
 module video_mux (
+    input wire clk_in,
     input wire bg_in,                  // choose background
     input wire target_in,              // choose target
     input wire [23:0] camera_pixel_in, // 16 bits from camera 5:6:5
@@ -43,7 +44,9 @@ module video_mux (
             l_2 = l_1;
     end
 
-    assign pixel_out = l_2;
+    always_ff @(posedge clk_in) begin
+        pixel_out <= l_2;
+    end
 endmodule
 
 `default_nettype wire
