@@ -625,31 +625,40 @@ module top_level (
     //    ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
 
 	    // Crosshair output
-    logic [6:0] is_crosshair;
-    logic [1:0] is_crosshair_hands;
+    logic [7:0] is_crosshair;
+    logic [2:0] is_crosshair_hands;
     logic [10:0] crosshair_x_diff [6:0];
     logic [9:0] crosshair_y_diff [6:0];
     logic [10:0] crosshair_x_diff_hands [1:0];
     logic [9:0] crosshair_y_diff_hands [1:0];
 
-    always_comb begin
-        for (int i=0; i<7; i=i+1) begin
-            crosshair_x_diff[i] = (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
-            crosshair_y_diff[i] = (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
-        end
-        crosshair_x_diff_hands[0] = (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
-        crosshair_y_diff_hands[0] = (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
-        crosshair_x_diff_hands[1] = (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
-        crosshair_y_diff_hands[1] = (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
-    end
+    // always_comb begin
+    //     for (int i=0; i<7; i=i+1) begin
+    //         crosshair_x_diff[i] = (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
+    //         crosshair_y_diff[i] = (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
+    //     end
+    //     crosshair_x_diff_hands[0] = (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
+    //     crosshair_y_diff_hands[0] = (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
+    //     crosshair_x_diff_hands[1] = (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
+    //     crosshair_y_diff_hands[1] = (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
+    // end
 
     always_ff @(posedge clk_pixel) begin
-        is_crosshair[0] <= ((crosshair_x_diff[0] <= 16 && crosshair_y_diff[0] <= 2) || (crosshair_x_diff[0] <= 2 && crosshair_y_diff[0] <= 16)) && num_balls <= 1;
-        for (int i=1; i<7; i=i+1) begin
-            is_crosshair[i] <= is_crosshair[i-1] || (((crosshair_x_diff[i] <= 16 && crosshair_y_diff[i] <= 2) || (crosshair_x_diff[i] <= 2 && crosshair_y_diff[i] <= 16)) && num_balls <= i+1);
+        for (int i=0; i<7; i=i+1) begin
+            crosshair_x_diff[i] <= (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
+            crosshair_y_diff[i] <= (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
         end
-        is_crosshair_hands[0] <= ((crosshair_x_diff_hands[0] <= 16 && crosshair_y_diff_hands[0] <= 2) || (crosshair_x_diff_hands[0] <= 2 && crosshair_y_diff_hands[0] <= 16));
-        is_crosshair_hands[1] <= is_crosshair_hands[0] || ((crosshair_x_diff_hands[1] <= 16 && crosshair_y_diff_hands[1] <= 2) || (crosshair_x_diff_hands[1] <= 2 && crosshair_y_diff_hands[1] <= 16));
+        crosshair_x_diff_hands[0] <= (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
+        crosshair_y_diff_hands[0] <= (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
+        crosshair_x_diff_hands[1] <= (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
+        crosshair_y_diff_hands[1] <= (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
+        is_crosshair[0] <= 0;
+        for (int i=1; i<8; i=i+1) begin
+            is_crosshair[i] <= is_crosshair[i-1] || (((crosshair_x_diff[i-1] <= 16 && crosshair_y_diff[i-1] <= 2) || (crosshair_x_diff[i-1] <= 2 && crosshair_y_diff[i-1] <= 16)) && num_balls <= i);
+        end
+        is_crosshair_hands[0] <= 0;
+        is_crosshair_hands[1] <= ((crosshair_x_diff_hands[0] <= 16 && crosshair_y_diff_hands[0] <= 2) || (crosshair_x_diff_hands[0] <= 2 && crosshair_y_diff_hands[0] <= 16));
+        is_crosshair_hands[2] <= is_crosshair_hands[1] || ((crosshair_x_diff_hands[1] <= 16 && crosshair_y_diff_hands[1] <= 2) || (crosshair_x_diff_hands[1] <= 2 && crosshair_y_diff_hands[1] <= 16));
     end
 	// }}} END CROSSHAIR
 
@@ -808,8 +817,8 @@ module top_level (
         .thresholded_pixel_in(mask),
         .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-        .crosshair_in(is_crosshair[6]),
-        .crosshair2_in(is_crosshair_hands[1]),
+        .crosshair_in(is_crosshair[7]),
+        .crosshair2_in(is_crosshair_hands[2]),
 		.judgment_correct(pattern_correct),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));

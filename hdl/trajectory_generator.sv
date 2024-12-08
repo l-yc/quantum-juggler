@@ -1,7 +1,7 @@
 `default_nettype none
 module trajectory_generator
 	#(
-		parameter g = 6, // pixels / frame^2
+		parameter g = 12, // pixels / frame^2
 		parameter s = 20
 	)
 	(
