@@ -667,21 +667,17 @@ module top_level (
         .count_out(select_count));
     
     logic [7:0] frame_per_beat;
-    logic [7:0] frame_per_beat_real;
     always_ff @(posedge clk_pixel)begin
         if (sys_rst_pixel) begin
             frame_per_beat <= 5;
         end else begin
             if (spi_read_data_valid) begin
-                frame_per_beat <= spi_read_data[9:6];
+                frame_per_beat <= spi_read_data[9:7];
             end
             if (select_count == 'b1) begin 
                 spi_trigger <= 1;
             end else begin
                 spi_trigger <= 0;
-            end
-            if (btn2_pulse) begin
-                frame_per_beat_real <= frame_per_beat;
             end
         end
     end
@@ -697,11 +693,11 @@ module top_level (
         .rst_in(sys_rst_pixel),
         .nf_in(nf_hdmi),
         .pattern(siteswap_pattern),
-        .pattern_valid(pattern_valid || btn2_clean),
+        .pattern_valid(pattern_valid),
         .num_balls(num_balls),
         .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
         .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
-        .frame_per_beat({frame_per_beat_real, 2'b11}),
+        .frame_per_beat({frame_per_beat, 2'b11}),
         .traj_x_out(traj_x_out),
         .traj_y_out(traj_y_out),
         .traj_valid(traj_valid));
