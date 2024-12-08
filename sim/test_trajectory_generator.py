@@ -34,15 +34,14 @@ async def test_a(dut):
     await FallingEdge(dut.clk_in)
     dut.nf_in = 0;
     #dut.pattern = [0, 0, 0, 0, 1, 3, 5]
-    #dut.pattern = [0, 0, 0, 0, 3, 3, 3]
+    dut.pattern = [0, 0, 0, 0, 3, 3, 3]
     #dut.pattern = [0, 0, 0, 0, 5, 5, 5]
-    dut.pattern = [0, 0, 0, 0, 3, 2, 4]
+    #dut.pattern = [0, 0, 0, 0, 3, 2, 4]
     dut.pattern_valid.value = 1
-    dut.num_balls = 3
-    #dut.hand_x_in = [1240, 40]
-    dut.hand_x_in = [700, 500]
-    dut.hand_y_in = [719, 719]
-    dut.frame_per_beat = 5
+    dut.num_balls.value = 3
+    dut.hand_x_in.value = [800, 600]
+    dut.hand_y_in.value = [719, 719]
+    dut.frame_per_beat.value = 5
 
     await ClockCycles(dut.clk_in, 1) #wait three clock cycles
     dut.pattern_valid.value = 0
@@ -71,6 +70,9 @@ async def test_a(dut):
             for j in range(3):
                 xs[j].append(frame_xs[j])
                 ys[j].append(frame_ys[j])
+
+        if i == 45:
+            dut.frame_per_beat.value = 10
         await ClockCycles(dut.clk_in, 1)
 
 
@@ -98,7 +100,8 @@ async def test_a(dut):
                 y = ys[i][frame]
 
                 data = np.stack([x, y]).T
-                print(data)
+                if i == 0:
+                    print('frame', frame, 'data', data)
                 scat[i].set_offsets(data)
             return scat[0]
 
