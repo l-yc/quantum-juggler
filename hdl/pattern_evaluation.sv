@@ -1,3 +1,8 @@
+`define A(i, j) \
+	((i == 0 || j == 0) ? 0 : \
+		($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) * ($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) + \
+		($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1])) * ($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1])))
+
 `default_nettype none
 module pattern_evaluation
 	#(
@@ -17,23 +22,22 @@ module pattern_evaluation
 		output logic pattern_correct
 	);
 
-	// FIXME decide on the bit widths
-	logic [22:0] A[6:0][6:0];
-	always_comb begin
-		for (integer i = 0; i <= 7; ++i) begin
-			for (integer j = 0; j <= 7; ++j) begin
-				if (i <= num_balls && j <= num_balls) begin
-					if (i == 0 || j == 0) begin
-						A[i][j] = 0;
-					end else begin
-						A[i][j] = 
-							($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) * ($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) +
-							($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1])) * ($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1]));
-					end
-				end
-			end
-		end
-	end
+	//logic [22:0] A[6:0][6:0];
+	//always_comb begin
+	//	for (integer i = 0; i <= 7; ++i) begin
+	//		for (integer j = 0; j <= 7; ++j) begin
+	//			if (i <= num_balls && j <= num_balls) begin
+	//				if (i == 0 || j == 0) begin
+	//					A[i][j] = 0;
+	//				end else begin
+	//					A[i][j] = 
+	//						($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) * ($signed(model_balls_x[i-1]) - $signed(real_balls_x[j-1])) +
+	//						($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1])) * ($signed(model_balls_y[i-1]) - $signed(real_balls_y[j-1]));
+	//				end
+	//			end
+	//		end
+	//	end
+	//end
 
 	// state machine
     typedef enum {
@@ -133,11 +137,15 @@ module pattern_evaluation
 			FORJ1_CHECK: begin end
 			FORJ1_BODY: begin
 				if (used[j] == 0) begin
-					if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(minv[j])) begin
-						minv[j] <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
+					//if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(minv[j])) begin
+					if ($signed(`A(i0, j)) - $signed(u[i0]) - $signed(v[j]) < $signed(minv[j])) begin
+						//minv[j] <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
+						minv[j] <= $signed(`A(i0, j)) - $signed(u[i0]) - $signed(v[j]);
 						way[j] <= j0;
-						if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(delta)) begin
-							delta <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
+						//if ($signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]) < $signed(delta)) begin
+						if ($signed(`A(i0, j)) - $signed(u[i0]) - $signed(v[j]) < $signed(delta)) begin
+							//delta <= $signed(A[i0][j]) - $signed(u[i0]) - $signed(v[j]);
+							delta <= $signed(`A(i0, j)) - $signed(u[i0]) - $signed(v[j]);
 							j1 <= j;
 						end
 					end else begin
