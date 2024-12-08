@@ -183,7 +183,7 @@ module pattern_evaluation
 
 				data_valid_out <= 1;
 				pattern_error <= -$signed(v[0]);
-				pattern_correct <= (-$signed(v[0]) < THRESHOLD * num_balls) ? 1 : 0;
+				pattern_correct <= (-$signed(v[0]) < $signed(THRESHOLD * num_balls)) ? 1 : 0;
 			end
 			default: begin end
 		endcase

@@ -44,8 +44,7 @@ async def test_a(dut):
     dut.data_valid_in.value = 0;
 
     await with_timeout(RisingEdge(dut.data_valid_out),5000,'ns')
-    #await RisingEdge(dut.data_valid_out)
-    await ClockCycles(dut.clk_in, 1)
+    await ClockCycles(dut.clk_in, 5)
     pat_err = dut.pattern_error.value.integer
     pat_ok = dut.pattern_correct.value
     print(pat_err, pat_ok)
@@ -53,29 +52,6 @@ async def test_a(dut):
     assert dut.ans[0].value == 2
     assert dut.ans[1].value == 0
     assert dut.ans[2].value == 1
-
-    #if True:
-    #    # matploblib stuff
-
-    #    fig, ax = plt.subplots()
-    #    scat = [ ax.scatter(xs[i], ys[i], s=30, label=f'ball {i}') for i in range(3) ]
-    #    ax.set(xlim=[0, 1280], ylim=[0, np.max(720) + 0.1], xlabel='x [m]', ylabel='y [m]')
-    #    ax.legend()
-
-
-    #    def update(frame):
-    #        for i in range(3):
-    #            x = xs[i][frame]
-    #            y = ys[i][frame]
-
-    #            data = np.stack([x, y]).T
-    #            print(data)
-    #            scat[i].set_offsets(data)
-    #        return scat[0]
-
-    #    ani = animation.FuncAnimation(fig=fig, func=update, frames=len(xs[0]), interval=100)
-    #    plt.gca().invert_yaxis()
-    #    plt.show()
 
 
 def pattern_evaluation_runner():
