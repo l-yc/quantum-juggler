@@ -625,8 +625,8 @@ module top_level (
     //    ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
 
 	    // Crosshair output
-    logic is_crosshair;
-    logic is_crosshair_hands;
+    logic [6:0] is_crosshair;
+    logic [1:0] is_crosshair_hands;
     logic [10:0] crosshair_x_diff [6:0];
     logic [9:0] crosshair_y_diff [6:0];
     logic [10:0] crosshair_x_diff_hands [1:0];
@@ -637,26 +637,20 @@ module top_level (
             crosshair_x_diff[i] = (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
             crosshair_y_diff[i] = (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
         end
-        crosshair_x_diff[0] = (hcount_hdmi > centroids_x[0]) ? hcount_hdmi - centroids_x[0] : centroids_x[0] - hcount_hdmi;
-        crosshair_y_diff[0] = (vcount_hdmi > centroids_y[0]) ? vcount_hdmi - centroids_y[0] : centroids_y[0] - vcount_hdmi;
-        crosshair_x_diff[1] = (hcount_hdmi > centroids_x[1]) ? hcount_hdmi - centroids_x[1] : centroids_x[1] - hcount_hdmi;
-        crosshair_y_diff[1] = (vcount_hdmi > centroids_y[1]) ? vcount_hdmi - centroids_y[1] : centroids_y[1] - vcount_hdmi;
+        crosshair_x_diff_hands[0] = (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
+        crosshair_y_diff_hands[0] = (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
+        crosshair_x_diff_hands[1] = (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
+        crosshair_y_diff_hands[1] = (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
     end
 
-    assign is_crosshair = (
-        (crosshair_x_diff[0] <= 8 && crosshair_y_diff[0] <= 8 && (crosshair_x_diff[0] <= 2 || crosshair_y_diff[0] <= 2) && num_balls >= 1) ||
-        (crosshair_x_diff[1] <= 8 && crosshair_y_diff[1] <= 8 && (crosshair_x_diff[1] <= 2 || crosshair_y_diff[1] <= 2) && num_balls >= 2) ||
-        (crosshair_x_diff[2] <= 8 && crosshair_y_diff[2] <= 8 && (crosshair_x_diff[2] <= 2 || crosshair_y_diff[2] <= 2) && num_balls >= 3) ||
-        (crosshair_x_diff[3] <= 8 && crosshair_y_diff[3] <= 8 && (crosshair_x_diff[3] <= 2 || crosshair_y_diff[3] <= 2) && num_balls >= 4) ||
-        (crosshair_x_diff[4] <= 8 && crosshair_y_diff[4] <= 8 && (crosshair_x_diff[4] <= 2 || crosshair_y_diff[4] <= 2) && num_balls >= 5) ||
-        (crosshair_x_diff[5] <= 8 && crosshair_y_diff[5] <= 8 && (crosshair_x_diff[5] <= 2 || crosshair_y_diff[5] <= 2) && num_balls >= 6) ||
-        (crosshair_x_diff[6] <= 8 && crosshair_y_diff[6] <= 8 && (crosshair_x_diff[6] <= 2 || crosshair_y_diff[6] <= 2) && num_balls >= 7)
-        );
-
-    assign is_crosshair_hands = (
-        (crosshair_x_diff_hands[0] <= 8 && crosshair_y_diff_hands[0] <= 8 && (crosshair_x_diff_hands[0] <= 2 || crosshair_y_diff_hands[0] <= 2)) ||
-        (crosshair_x_diff_hands[1] <= 8 && crosshair_y_diff_hands[1] <= 8 && (crosshair_x_diff_hands[1] <= 2 || crosshair_y_diff_hands[1] <= 2))
-        );
+    always_ff @(posedge clk_pixel) begin
+        is_crosshair[0] <= ((crosshair_x_diff[0] <= 16 && crosshair_y_diff[0] <= 2) || (crosshair_x_diff[0] <= 2 && crosshair_y_diff[0] <= 16)) && num_balls <= 1;
+        for (int i=1; i<7; i=i+1) begin
+            is_crosshair[i] <= is_crosshair[i-1] || (((crosshair_x_diff[i] <= 16 && crosshair_y_diff[i] <= 2) || (crosshair_x_diff[i] <= 2 && crosshair_y_diff[i] <= 16)) && num_balls <= i+1);
+        end
+        is_crosshair_hands[0] <= ((crosshair_x_diff_hands[0] <= 16 && crosshair_y_diff_hands[0] <= 2) || (crosshair_x_diff_hands[0] <= 2 && crosshair_y_diff_hands[0] <= 16));
+        is_crosshair_hands[1] <= is_crosshair_hands[0] || ((crosshair_x_diff_hands[1] <= 16 && crosshair_y_diff_hands[1] <= 2) || (crosshair_x_diff_hands[1] <= 2 && crosshair_y_diff_hands[1] <= 16));
+    end
 	// }}} END CROSSHAIR
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
@@ -704,7 +698,7 @@ module top_level (
     
     always_ff @(posedge clk_pixel)begin
         if (spi_read_data_valid) begin//if the SPI has received message back:
-            frame_per_beat <= spi_read_data[9:5];
+            frame_per_beat <= spi_read_data[9:6];
         end
         if (select_count=='d1)begin //once a millisecond select_count==1
             spi_trigger <= 1; //trigger spi transaction (channel read based on case above)
@@ -734,7 +728,7 @@ module top_level (
             .num_balls(num_balls),
             .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
             .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
-            .frame_per_beat(frame_per_beat),
+            .frame_per_beat({frame_per_beat, 2'b11}),
             .traj_x_out(traj_x_out),
             .traj_y_out(traj_y_out),
             .traj_valid(traj_valid)
@@ -814,8 +808,8 @@ module top_level (
         .thresholded_pixel_in(mask),
         .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-        .crosshair_in(is_crosshair),
-        .crosshair2_in(is_crosshair_hands),
+        .crosshair_in(is_crosshair[6]),
+        .crosshair2_in(is_crosshair_hands[1]),
 		.judgment_correct(pattern_correct),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
