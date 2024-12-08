@@ -650,7 +650,7 @@ module top_level (
         (crosshair_x_diff[3] <= 8 && crosshair_y_diff[3] <= 8 && (crosshair_x_diff[3] <= 2 || crosshair_y_diff[3] <= 2) && num_balls >= 4) ||
         (crosshair_x_diff[4] <= 8 && crosshair_y_diff[4] <= 8 && (crosshair_x_diff[4] <= 2 || crosshair_y_diff[4] <= 2) && num_balls >= 5) ||
         (crosshair_x_diff[5] <= 8 && crosshair_y_diff[5] <= 8 && (crosshair_x_diff[5] <= 2 || crosshair_y_diff[5] <= 2) && num_balls >= 6) ||
-        (crosshair_x_diff[6] <= 8 && crosshair_y_diff[6] <= 8 && (crosshair_x_diff[6] <= 2 || crosshair_y_diff[6] <= 2) && num_balls >= 7) ||
+        (crosshair_x_diff[6] <= 8 && crosshair_y_diff[6] <= 8 && (crosshair_x_diff[6] <= 2 || crosshair_y_diff[6] <= 2) && num_balls >= 7)
         );
 
     assign is_crosshair_hands = (
