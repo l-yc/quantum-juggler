@@ -441,6 +441,22 @@ module top_level (
         prev_btn1_clean <= btn1_clean;
     end
 
+    // Debouncer to clean up signal
+    logic btn2_clean;
+    debouncer btn2_db (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .dirty_in(btn[2]),
+        .clean_out(btn2_clean));
+
+    // Pulse generator for sending new beat
+    logic btn2_pulse;
+    logic prev_btn2_clean;
+    always_ff @(posedge clk_pixel) begin
+        btn2_pulse <= !prev_btn2_clean && btn2_clean;
+        prev_btn2_clean <= btn2_clean;
+    end
+
     // Pattern generation and seven segment display
     logic [2:0] siteswap_pattern [6:0]; // Most significant 3 bits at index 0
     logic pattern_valid;
@@ -579,7 +595,6 @@ module top_level (
         .centroids_x_out(centroids_x_calc_hands),
         .centroids_y_out(centroids_y_calc_hands));
 
-
     always_ff @(posedge clk_pixel) begin
         for (int i=0; i<7; i=i+1) begin
             centroids_x_init[i] <= 20 + 40 * i;
@@ -593,12 +608,6 @@ module top_level (
             centroids_x_init_hands[i] <= 0;
             centroids_y_init_hands[i] <= 0;
         end
-//        if (sys_rst_pixel) begin
-//            for (int i=0; i<7; i=i+1) begin
-//                centroids_x_init[i] <= 20 + 40 * i;
-//                centroids_y_init[i] <= 90;
-//            end
-//        end 
         if (k_means_valid) begin
             for (int i=0; i<7; i=i+1) begin
                 centroids_x[i] <= {centroids_x_calc[i], 2'b0};
@@ -606,61 +615,21 @@ module top_level (
                 centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
                 centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
-            //centroids_x_init <= centroids_x_calc;
-            //centroids_y_init <= centroids_y_calc;
         end
     end
 
-    // Crosshair output {{{
-    //logic is_crosshair;
-    //assign is_crosshair = (
-    //    ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
-    //    (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
-    //    ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
-    //    (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
-    //    ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
-    //    ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
-    //    ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
-    //    ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
-    //    ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
-
-	    // Crosshair output
-    logic [7:0] is_crosshair;
-    logic [2:0] is_crosshair_hands;
-    logic [10:0] crosshair_x_diff [6:0];
-    logic [9:0] crosshair_y_diff [6:0];
-    logic [10:0] crosshair_x_diff_hands [1:0];
-    logic [9:0] crosshair_y_diff_hands [1:0];
-
-    // always_comb begin
-    //     for (int i=0; i<7; i=i+1) begin
-    //         crosshair_x_diff[i] = (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
-    //         crosshair_y_diff[i] = (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
-    //     end
-    //     crosshair_x_diff_hands[0] = (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
-    //     crosshair_y_diff_hands[0] = (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
-    //     crosshair_x_diff_hands[1] = (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
-    //     crosshair_y_diff_hands[1] = (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
-    // end
-
-    always_ff @(posedge clk_pixel) begin
-        for (int i=0; i<7; i=i+1) begin
-            crosshair_x_diff[i] <= (hcount_hdmi > centroids_x[i]) ? hcount_hdmi - centroids_x[i] : centroids_x[i] - hcount_hdmi;
-            crosshair_y_diff[i] <= (vcount_hdmi > centroids_y[i]) ? vcount_hdmi - centroids_y[i] : centroids_y[i] - vcount_hdmi;
-        end
-        crosshair_x_diff_hands[0] <= (hcount_hdmi > centroids_x_hands[0]) ? hcount_hdmi - centroids_x_hands[0] : centroids_x_hands[0] - hcount_hdmi;
-        crosshair_y_diff_hands[0] <= (vcount_hdmi > centroids_y_hands[0]) ? vcount_hdmi - centroids_y_hands[0] : centroids_y_hands[0] - vcount_hdmi;
-        crosshair_x_diff_hands[1] <= (hcount_hdmi > centroids_x_hands[1]) ? hcount_hdmi - centroids_x_hands[1] : centroids_x_hands[1] - hcount_hdmi;
-        crosshair_y_diff_hands[1] <= (vcount_hdmi > centroids_y_hands[1]) ? vcount_hdmi - centroids_y_hands[1] : centroids_y_hands[1] - vcount_hdmi;
-        is_crosshair[0] <= 0;
-        for (int i=1; i<8; i=i+1) begin
-            is_crosshair[i] <= is_crosshair[i-1] || (((crosshair_x_diff[i-1] <= 16 && crosshair_y_diff[i-1] <= 2) || (crosshair_x_diff[i-1] <= 2 && crosshair_y_diff[i-1] <= 16)) && num_balls <= i);
-        end
-        is_crosshair_hands[0] <= 0;
-        is_crosshair_hands[1] <= ((crosshair_x_diff_hands[0] <= 16 && crosshair_y_diff_hands[0] <= 2) || (crosshair_x_diff_hands[0] <= 2 && crosshair_y_diff_hands[0] <= 16));
-        is_crosshair_hands[2] <= is_crosshair_hands[1] || ((crosshair_x_diff_hands[1] <= 16 && crosshair_y_diff_hands[1] <= 2) || (crosshair_x_diff_hands[1] <= 2 && crosshair_y_diff_hands[1] <= 16));
-    end
-	// }}} END CROSSHAIR
+   // Crosshair output
+    logic is_crosshair;
+    assign is_crosshair = (
+        ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
+        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
+        ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
+        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
+        ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
+        ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
+        ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
+        ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
+        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));	// }}} END CROSSHAIR
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
 
@@ -668,126 +637,113 @@ module top_level (
     
     parameter ADC_DATA_WIDTH = 17; 
     parameter ADC_DATA_CLK_PERIOD = 50; 
-    
     parameter ADC_READ_PERIOD = 100_000; //read one channel of ADC every millisec
     
-    //SPI interface controls
+    // SPI interface controls
     logic [ADC_DATA_WIDTH-1:0] spi_write_data;
     logic [ADC_DATA_WIDTH-1:0] spi_read_data;
     logic spi_trigger;
     logic spi_read_data_valid;
-    logic [7:0] frame_per_beat;
     
-    //built in previous section:
-    spi_con
-    #(   .DATA_WIDTH(ADC_DATA_WIDTH),
-        .DATA_CLK_PERIOD(ADC_DATA_CLK_PERIOD)
-    )my_spi_con
-    ( .clk_in(clk_pixel),
+    spi_con #(
+        .DATA_WIDTH(ADC_DATA_WIDTH),
+        .DATA_CLK_PERIOD(ADC_DATA_CLK_PERIOD)) my_spi_con (
+        .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .data_in(17'b11000_0000_0000_0000),
         .trigger_in(spi_trigger),
         .data_out(spi_read_data),
-        .data_valid_out(spi_read_data_valid), //high when output data is present.
-        .chip_data_out(copi), //(serial dout preferably)
-        .chip_data_in(cipo), //(serial din preferably)
+        .data_valid_out(spi_read_data_valid),
+        .chip_data_out(copi),
+        .chip_data_in(cipo),
         .chip_clk_out(dclk),
-        .chip_sel_out(cs)
-        );
+        .chip_sel_out(cs));
 
-    //counter from week 1. that will count up and we'll use for triggering
     logic [31:0] select_count;
-    counter //include your regular counter from week 1 in source!
-    select_counter
-    (  .clk_in(clk_pixel),
+    counter select_counter (
+        .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .period_in(ADC_READ_PERIOD),
-        .count_out(select_count)
-    );
+        .count_out(select_count));
     
+    logic [7:0] frame_per_beat;
+    logic [7:0] frame_per_beat_real;
     always_ff @(posedge clk_pixel)begin
-        if (spi_read_data_valid) begin//if the SPI has received message back:
-            frame_per_beat <= spi_read_data[9:6];
-        end
-        if (select_count=='d1)begin //once a millisecond select_count==1
-            spi_trigger <= 1; //trigger spi transaction (channel read based on case above)
+        if (sys_rst_pixel) begin
+            frame_per_beat <= 5;
         end else begin
-            spi_trigger <= 0;
+            if (spi_read_data_valid) begin
+                frame_per_beat <= spi_read_data[9:6];
+            end
+            if (select_count == 'b1) begin 
+                spi_trigger <= 1;
+            end else begin
+                spi_trigger <= 0;
+            end
+            if (btn2_pulse) begin
+                frame_per_beat_real <= frame_per_beat;
+            end
         end
     end
 
     //}}} -------------- END POTENTIOMETER --------------//
 
-
-
 	// MARK: trajectory modules {{{
 	logic [10:0] traj_x_out[6:0];
 	logic [9:0] traj_y_out[6:0];
 	logic traj_valid;
-    trajectory_generator
-        #(
-            .g(6)
-        ) traj_gen
-        (
-            .clk_in(clk_pixel),
-            .rst_in(sys_rst_pixel),
-			.nf_in(nf_hdmi),
-            .pattern(siteswap_pattern),
-            .pattern_valid(pattern_valid),
-            .num_balls(num_balls),
-            .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
-            .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
-            .frame_per_beat({frame_per_beat, 2'b11}),
-            .traj_x_out(traj_x_out),
-            .traj_y_out(traj_y_out),
-            .traj_valid(traj_valid)
-        );	
+    trajectory_generator #(.g(12)) traj_gen (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .nf_in(nf_hdmi),
+        .pattern(siteswap_pattern),
+        .pattern_valid(pattern_valid || btn2_clean),
+        .num_balls(num_balls),
+        .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
+        .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
+        .frame_per_beat({frame_per_beat_real, 2'b11}),
+        .traj_x_out(traj_x_out),
+        .traj_y_out(traj_y_out),
+        .traj_valid(traj_valid));
 	
 	logic [7:0] trajectory_red;
 	logic [7:0] trajectory_green;
 	logic [7:0] trajectory_blue;
 
-    draw_trajectory draw_traj
-        (
-            .clk_in(clk_pixel),
-            .rst_in(sys_rst_pixel),
+    draw_trajectory draw_traj (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
 
-            .num_balls(num_balls),
-            .traj_x_in(traj_x_out),
-            .traj_y_in(traj_y_out),
-            .traj_valid(traj_valid),
-            .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
-            .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
+        .num_balls(num_balls),
+        .traj_x_in(traj_x_out),
+        .traj_y_in(traj_y_out),
+        .traj_valid(traj_valid),
+        .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
+        .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
 
-            .hcount_in(hcount_hdmi),
-            .vcount_in(vcount_hdmi),
-            .red_out(trajectory_red),
-            .green_out(trajectory_green),
-            .blue_out(trajectory_blue)
-        );
+        .hcount_in(hcount_hdmi),
+        .vcount_in(vcount_hdmi),
+        .red_out(trajectory_red),
+        .green_out(trajectory_green),
+        .blue_out(trajectory_blue));
     // }}}
 
 	// MARK: pattern eval {{{
 	logic eval_out;
 	logic [14:0] pattern_error;
 	logic pattern_correct;
-	pattern_evaluation
-	#(
-		.THRESHOLD(512)
-	) pattern_evaluator
-	(
-		.clk_in(clk_pixel), // TODO what clock rate?
+	pattern_evaluation #(.THRESHOLD(512)) pattern_evaluator (
+		.clk_in(clk_pixel),
 		.rst_in(sys_rst_pixel),
 		.data_valid_in(pattern_valid && k_means_valid),
-		.num_balls(num_balls), // TODO replace with num_balls
+		.num_balls(num_balls),
 		.model_balls_x(traj_x_out),
 		.model_balls_y(traj_y_out),
 		.real_balls_x(centroids_x),
 		.real_balls_y(centroids_y),
 		.data_valid_out(eval_out),
 		.pattern_error(pattern_error),
-		.pattern_correct(pattern_correct)
-	);
+		.pattern_correct(pattern_correct));
 
     logic is_judgment;
 	localparam BORDER = 16;
@@ -817,8 +773,8 @@ module top_level (
         .thresholded_pixel_in(mask),
         .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-        .crosshair_in(is_crosshair[7]),
-        .crosshair2_in(is_crosshair_hands[2]),
+        .crosshair_in(is_crosshair),
+        .crosshair2_in(is_crosshair),
 		.judgment_correct(pattern_correct),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));

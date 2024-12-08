@@ -1,8 +1,4 @@
-module draw_trajectory
-	#(
-		parameter BALL_SIZE = 10
-	)
-	(
+module draw_trajectory #(parameter BALL_SIZE = 10) (
 		input wire clk_in,
 		input wire rst_in,
 

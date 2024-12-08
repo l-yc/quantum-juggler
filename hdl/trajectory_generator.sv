@@ -1,7 +1,7 @@
 `default_nettype none
 module trajectory_generator
 	#(
-		parameter g = 12, // pixels / frame^2
+		parameter g = 6, // pixels / frame^2
 		parameter s = 20
 	)
 	(
@@ -31,14 +31,11 @@ module trajectory_generator
 	generate
 		genvar p;
 
-		assign max_t[0] = 0;
 		assign vx[0] = 0;
 		assign vx_ready[0] = 1;
 		assign vy[0] = 0;
 
 		for (p = 1; p < 8; p += 1) begin
-			assign max_t[p] = p * frame_per_beat;
-			//assign vx[p] = distance / (p * frame_per_beat);
 			divider vx_divider(
 				.clk_in(clk_in),
 				.rst_in(rst_in),
