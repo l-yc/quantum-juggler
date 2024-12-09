@@ -553,6 +553,8 @@ module top_level (
 
     logic [8:0] centroids_x_init [6:0];
     logic [7:0] centroids_y_init [6:0];
+    logic k_means_valid1;
+    logic k_means_valid2;
     logic k_means_valid;
     logic [8:0] centroids_x_calc [6:0];
     logic [7:0] centroids_y_calc [6:0];
@@ -569,9 +571,31 @@ module top_level (
         .num_balls(num_balls),
         .data_valid_in(mask && hcount_hdmi[1:0] == 0),
         .new_frame(nf_hdmi),
-        .data_valid_out(k_means_valid),
+        .data_valid_out(k_means_valid1),
         .centroids_x_out(centroids_x_calc),
         .centroids_y_out(centroids_y_calc));
+
+	always_comb begin
+		k_means_valid = k_means_valid1 && k_means_valid2;
+
+		k_means_valid2 = 1;
+		for (integer i = 0; i < 7; i += 1) begin
+			for (integer j = i+1; j < 7; j += 1) begin
+				if (i < num_balls && j < num_balls) begin
+					if (((centroids_x_calc[i] > centroids_x_calc[j] &&
+							(centroids_x_calc[i]-centroids_x_calc[j]) <= 5) ||
+						(centroids_x_calc[j] >= centroids_x_calc[i] &&
+							(centroids_x_calc[j]-centroids_x_calc[i]) <= 5)) &&
+						((centroids_y_calc[i] > centroids_y_calc[j] &&
+							(centroids_y_calc[i]-centroids_y_calc[j]) <= 5) ||
+						(centroids_y_calc[j] >= centroids_y_calc[i] &&
+							(centroids_y_calc[j]-centroids_y_calc[i]) <= 5))) begin
+						k_means_valid2 = 0;
+					end
+				end
+			end
+		end
+	end
 
     logic [8:0] centroids_x_init_hands [6:0];
     logic [7:0] centroids_y_init_hands [6:0];
@@ -612,15 +636,19 @@ module top_level (
             for (int i=0; i<7; i=i+1) begin
                 centroids_x[i] <= {centroids_x_calc[i], 2'b0};
                 centroids_y[i] <= {centroids_y_calc[i], 2'b0};
+            end
+        end
+        if (k_means_valid_hands) begin
+            for (int i=0; i<7; i=i+1) begin
                 centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
                 centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
-        end
+		end
     end
 
    // Crosshair output
     logic is_crosshair;
-    assign is_crosshair = (
+    assign is_crosshair = k_means_valid && k_means_valid_hands && (
         ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
         (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
         ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
@@ -694,7 +722,7 @@ module top_level (
         else if (frame_per_beat >= 10) fpb_filtered = 10;
         else fpb_filtered = frame_per_beat;
     end
-    trajectory_generator #(.g(12)) traj_gen (
+    trajectory_generator #(.g(2)) traj_gen (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .nf_in(nf_hdmi),
@@ -722,7 +750,6 @@ module top_level (
         .traj_valid(traj_valid),
         .hand_x_in({centroids_x_hands[1], centroids_x_hands[0]}),
         .hand_y_in({centroids_y_hands[1], centroids_y_hands[0]}),
-
         .hcount_in(hcount_hdmi),
         .vcount_in(vcount_hdmi),
         .red_out(trajectory_red),
@@ -734,7 +761,7 @@ module top_level (
 	logic eval_out;
 	logic [14:0] pattern_error;
 	logic pattern_correct;
-	pattern_evaluation #(.THRESHOLD(512)) pattern_evaluator (
+	pattern_evaluation #(.THRESHOLD(20000)) pattern_evaluator (
 		.clk_in(clk_pixel),
 		.rst_in(sys_rst_pixel || nf_hdmi),
 		.nf_in(nf_hdmi),
@@ -747,6 +774,13 @@ module top_level (
 		.data_valid_out(eval_out),
 		.pattern_error(pattern_error),
 		.pattern_correct(pattern_correct));
+
+	logic judgment;
+	always_ff @(posedge clk_pixel) begin
+		if (eval_out) begin
+			judgment <= pattern_correct;
+		end
+	end
 
     logic is_judgment;
 	localparam BORDER = 16;
@@ -779,7 +813,7 @@ module top_level (
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
         .crosshair2_in(is_crosshair),
-		.judgment_correct(pattern_correct),
+		.judgment_correct(judgment),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
 
