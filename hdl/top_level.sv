@@ -730,8 +730,9 @@ module top_level (
 	logic pattern_correct;
 	pattern_evaluation #(.THRESHOLD(512)) pattern_evaluator (
 		.clk_in(clk_pixel),
-		.rst_in(sys_rst_pixel),
-		.data_valid_in(pattern_valid && k_means_valid),
+		.rst_in(sys_rst_pixel || nf_hdmi),
+		.nf_in(nf_hdmi),
+		.data_valid_in(traj_valid && k_means_valid),
 		.num_balls(num_balls),
 		.model_balls_x(traj_x_out),
 		.model_balls_y(traj_y_out),

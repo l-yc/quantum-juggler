@@ -6,6 +6,7 @@ module pattern_evaluation
 	(
 		input wire clk_in, // TODO what clock rate?
 		input wire rst_in,
+		input wire nf_in,
 		input wire data_valid_in,
 		input wire [2:0] num_balls,
 		input wire [10:0] model_balls_x[6:0],
