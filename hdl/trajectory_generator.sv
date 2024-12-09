@@ -52,6 +52,17 @@ module trajectory_generator
 		end
 	endgenerate
 
+	logic [22:0] vxt[7:0];
+	logic [32:0] vyt[7:0];
+	logic [27:0] gtt[7:0];
+	always_comb begin
+		for (integer i = 0; i < 7; i += 1) begin
+			vxt[i] = vx[throw[i]] * (t - t_start[i]);
+			vyt[i] = vy[throw[i]] * (t - t_start[i]);
+			gtt[i] = ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+		end
+	end
+
 	// state machine
     enum {IDLE, INIT, TRANSMIT} prev, state, next;
     always_comb begin
@@ -204,13 +215,17 @@ module trajectory_generator
 							//traj_x_out[i] <= (t - t_start[i]);
 							//traj_x_out[i] <= vx[throw[i]];
 							if ((throw[i] & 1) == 0) begin
-								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s - vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s + vx[throw[i]] * (t - t_start[i]);
+								//traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s - vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s + vx[throw[i]] * (t - t_start[i]);
+								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s - vxt[i] : _hand_x_in[1] - s + vxt[i];
 							end else begin
-								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s - vx[throw[i]] * (t - t_start[i]);
+								//traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s - vx[throw[i]] * (t - t_start[i]);
+								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vxt[i] : _hand_x_in[1] - s - vxt[i];
 							end
 							//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
-                            if (_hand_y_in[0] + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1) > vy[throw[i]] * (t - t_start[i])) begin
-                                traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+                            //if (_hand_y_in[0] + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1) > vy[throw[i]] * (t - t_start[i])) begin
+                            if (_hand_y_in[0] + gtt[i] > vyt[i]) begin
+                                //traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+                                traj_y_out[i] <= _hand_y_in[0] - vyt[i] + gtt[i];
                             end else begin
                                 traj_y_out[i] <= 0;
                             end
