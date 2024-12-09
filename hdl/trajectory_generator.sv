@@ -209,7 +209,11 @@ module trajectory_generator
 								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s - vx[throw[i]] * (t - t_start[i]);
 							end
 							//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
-							traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+                            if (_hand_y_in[0] + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1) > vy[throw[i]] * (t - t_start[i])) begin
+                                traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
+                            end else begin
+                                traj_y_out[i] <= 0;
+                            end
 						end
 					end
 				end
