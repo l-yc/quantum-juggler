@@ -618,18 +618,31 @@ module top_level (
         end
     end
 
-   // Crosshair output
-    logic is_crosshair;
-    assign is_crosshair = (
-        ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
-        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
-        ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
-        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
-        ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
-        ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
-        ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
-        ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
-        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));	// }}} END CROSSHAIR
+    // Crosshair output{{{
+    logic [6:0] is_crosshair;
+    logic [1:0] is_crosshair_hands;
+    logic [10:0] is_crosshair_dx [6:0];
+    logic [9:0] is_crosshair_dy [6:0];
+    logic [10:0] is_crosshair_dx_hands [1:0];
+    logic [9:0] is_crosshair_dy_hands [1:0];
+
+    always_ff @(posedge clk_pixel) begin
+        for (int i=0; i<7; i=i+1) begin
+            is_crosshair_dx[i] <= (centroids_x[i] > hcount_hdmi) ? centroids_x[i] - hcount_hdmi : hcount_hdmi - centroids_x[i];
+            is_crosshair_dy[i] <= (centroids_y[i] > vcount_hdmi) ? centroids_y[i] - vcount_hdmi : vcount_hdmi - centroids_y[i];
+        end
+        for (int i=0; i<2; i=i+1) begin
+            is_crosshair_dx_hands[i] <= (centroids_x_hands[i] > hcount_hdmi) ? centroids_x_hands[i] - hcount_hdmi : hcount_hdmi - centroids_x_hands[i];
+            is_crosshair_dy_hands[i] <= (centroids_y_hands[i] > vcount_hdmi) ? centroids_y_hands[i] - vcount_hdmi : vcount_hdmi - centroids_y_hands[i];
+        end
+        is_crosshair[0] <= ((is_crosshair_dx[0] <= 16 && is_crosshair_dy[0] <= 2) || (is_crosshair_dx[0] <= 2 && is_crosshair_dy[0] <= 16)) && num_balls >= 1;
+        for (int i=1; i<7; i=i+1) begin
+            is_crosshair[i] <= is_crosshair[i-1] || (((is_crosshair_dx[i] <= 16 && is_crosshair_dy[i] <= 2) || (is_crosshair_dx[i] <= 2 && is_crosshair_dy[i] <= 16)) && num_balls >= i+1);
+        end
+        is_crosshair_hands[0] <= (is_crosshair_dx_hands[0] <= 16 && is_crosshair_dy_hands[0] <= 2) || (is_crosshair_dx_hands[0] <= 2 && is_crosshair_dy_hands[0] <= 16);
+        is_crosshair_hands[1] <= is_crosshair_hands[0] || (is_crosshair_dx_hands[1] <= 16 && is_crosshair_dy_hands[1] <= 2) || (is_crosshair_dx_hands[1] <= 2 && is_crosshair_dy_hands[1] <= 16);
+    end
+    // }}} END CROSSHAIR
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
 
@@ -771,8 +784,8 @@ module top_level (
         .thresholded_pixel_in(mask),
         .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
-        .crosshair_in(is_crosshair),
-        .crosshair2_in(is_crosshair),
+        .crosshair_in(is_crosshair[6]),
+        .crosshair2_in(is_crosshair_hands[1]),
 		.judgment_correct(pattern_correct),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
