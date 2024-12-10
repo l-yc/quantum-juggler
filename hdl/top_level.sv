@@ -616,20 +616,28 @@ module top_level (
                 centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
         end
+        if (k_means_valid_hands) begin
+            for (int i=0; i<7; i=i+1) begin
+                centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
+                centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
+            end
+        end
     end
 
    // Crosshair output
     logic is_crosshair;
     assign is_crosshair = (
         ((vcount_hdmi == centroids_y[0] || hcount_hdmi == centroids_x[0]) && num_balls >= 1) ||
-        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
         ((vcount_hdmi == centroids_y[1] || hcount_hdmi == centroids_x[1]) && num_balls >= 2) ||
-        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]) ||
         ((vcount_hdmi == centroids_y[2] || hcount_hdmi == centroids_x[2]) && num_balls >= 3) ||
         ((vcount_hdmi == centroids_y[3] || hcount_hdmi == centroids_x[3]) && num_balls >= 4) ||
         ((vcount_hdmi == centroids_y[4] || hcount_hdmi == centroids_x[4]) && num_balls >= 5) ||
         ((vcount_hdmi == centroids_y[5] || hcount_hdmi == centroids_x[5]) && num_balls >= 6) ||
-        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));	// }}} END CROSSHAIR
+        ((vcount_hdmi == centroids_y[6] || hcount_hdmi == centroids_x[6]) && num_balls >= 7));
+    logic is_crosshair_hands;
+    assign is_crosshair_hands = (
+        (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
+        (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]));
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
 
@@ -783,7 +791,7 @@ module top_level (
         .thresholded2_pixel_in(mask_hands),
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
-        .crosshair2_in(is_crosshair),
+        .crosshair2_in(is_crosshair_hands),
 		.judgment_correct(judgment),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
