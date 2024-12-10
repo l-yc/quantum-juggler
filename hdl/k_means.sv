@@ -147,7 +147,7 @@ module k_means #(parameter MAX_ITER = 20) (
     endgenerate
  
     // Sum up all the values 
-    logic [8:0] x_sum_temp [6:0];
+    logic [9:0] x_sum_temp [6:0];
     logic [8:0] y_sum_temp [6:0];
     logic [3:0] total_mass_temp [6:0];
 
@@ -213,8 +213,10 @@ module k_means #(parameter MAX_ITER = 20) (
                         for (int i=0; i<SUM_WIDTH/2; i=i+1) begin
                             for (int j=0; j<7; j=j+1) begin
                                 x_sum_temp[j] <= (
-                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] == 1'b1 && j == min_index[2*i]) ? 2*i+(update_state-3)*SUM_WIDTH : 0) + 
-                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] == 1'b1 && j == min_index[2*i+1]) ? 2*i+(update_state-3)*SUM_WIDTH+1 : 0)
+                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] == 1'b1 && j == min_index[2*i]) ? 
+                                        2*i+(update_state-3)*SUM_WIDTH + x_read : 0) +
+                                    ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH+1] == 1'b1 && j == min_index[2*i+1]) ? 
+                                        2*i+(update_state-3)*SUM_WIDTH + x_read + 1 : 0)
                                 );
                                 y_sum_temp[j] <= (
                                     ((curr_bram_data_out[2*i+(update_state-3)*SUM_WIDTH] == 1'b1 && j == min_index[2*i]) ? y_read : 0) + 
@@ -231,7 +233,7 @@ module k_means #(parameter MAX_ITER = 20) (
                     // Accumulate x sum
                     if (4 <= update_state && update_state <= BRAM_WIDTH/SUM_WIDTH+3) begin
                         for (int i=0; i<7; i=i+1) begin
-                            x_sum[i] <= x_sum_temp[i] + x_read * total_mass_temp[i] + x_sum[i];
+                            x_sum[i] <= x_sum_temp[i] + x_sum[i];
                             y_sum[i] <= y_sum_temp[i] + y_sum[i];
                             total_mass[i] <= total_mass_temp[i] + total_mass[i];
                         end
