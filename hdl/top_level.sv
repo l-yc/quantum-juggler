@@ -748,6 +748,11 @@ module top_level (
 		.pattern_error(pattern_error),
 		.pattern_correct(pattern_correct));
 
+    logic judgment;
+    always_ff @(posedge clk_pixel) begin
+        if (eval_out) judgment <= pattern_correct;
+    end
+
     logic is_judgment;
 	localparam BORDER = 16;
     assign is_judgment =
@@ -779,7 +784,7 @@ module top_level (
 		.trajectory_pixel_in({trajectory_red, trajectory_blue, trajectory_green}),
         .crosshair_in(is_crosshair),
         .crosshair2_in(is_crosshair),
-		.judgment_correct(pattern_correct),
+		.judgment_correct(judgment),
         .judgment_in(is_judgment),
         .pixel_out({red, green, blue}));
 
