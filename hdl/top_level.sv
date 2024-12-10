@@ -688,11 +688,11 @@ module top_level (
 	logic [10:0] traj_x_out[6:0];
 	logic [9:0] traj_y_out[6:0];
 	logic traj_valid;
-    logic [7:0] fpb_filtered;
+    logic [3:0] fpb_filtered;
     always_comb begin
         if (frame_per_beat <= 3) fpb_filtered = 3;
         else if (frame_per_beat >= 10) fpb_filtered = 10;
-        else fpb_filtered = frame_per_beat;
+        else fpb_filtered = frame_per_beat[3:0];
     end
     trajectory_generator #(.g(3)) traj_gen (
         .clk_in(clk_pixel),

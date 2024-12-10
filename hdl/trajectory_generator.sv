@@ -14,7 +14,7 @@ module trajectory_generator
 		input wire [2:0] num_balls,
 		input wire [10:0] hand_x_in[1:0],
 		input wire [9:0] hand_y_in[1:0],
-		input wire [14:0] frame_per_beat,
+		input wire [3:0] frame_per_beat,
 		output logic [10:0] traj_x_out[6:0],
 		output logic [9:0] traj_y_out[6:0],
 		output logic traj_valid
@@ -24,20 +24,23 @@ module trajectory_generator
 	logic [10:0] distance;
 	assign distance = _hand_x_in[1] - _hand_x_in[0];
 
-	logic [10:0] vx[7:0];
-	logic [20:0] vy[7:0];
+	logic [7:0][10:0] vx;
+	logic [7:0][20:0] vy;
 	logic [7:0] vx_ready;
+    always_comb begin
+        vx[0] = 0;
+        vx_ready[0] = 1;
+        vy[0] = 0;
+        for (int p = 1; p < 8; p=p+1) begin
+			vy[p] = (p == 2) ? 0 : (g * p * frame_per_beat) >> 1;
+        end
+    end
 
 	logic needs_divide;
 	generate
 		genvar p;
-
-		assign vx[0] = 0;
-		assign vx_ready[0] = 1;
-		assign vy[0] = 0;
-
 		for (p = 1; p < 8; p += 1) begin
-			divider vx_divider(
+			divider #(.WIDTH(22)) vx_divider(
 				.clk_in(clk_in),
 				.rst_in(rst_in),
 				.dividend_in((p&1) == 0 ? 2 * s : distance),
@@ -48,7 +51,6 @@ module trajectory_generator
 				.data_valid_out(vx_ready[p]),
 				.error_out(),
 				.busy_out());
-			assign vy[p] = (p == 2) ? 0 : (g * p * frame_per_beat) >> 1;
 		end
 	endgenerate
 
@@ -87,7 +89,7 @@ module trajectory_generator
 	logic [2:0] _num_balls;
 	logic [10:0] _hand_x_in[1:0];
 	logic [9:0] _hand_y_in[1:0];
-	logic [14:0] _frame_per_beat;
+	logic [3:0] _frame_per_beat;
 
 	always_comb begin
 		if (hand_x_in[0] < hand_x_in[1]) begin
