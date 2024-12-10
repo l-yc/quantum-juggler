@@ -734,7 +734,7 @@ module top_level (
 	logic eval_out;
 	logic [14:0] pattern_error;
 	logic pattern_correct;
-	pattern_evaluation #(.THRESHOLD(512)) pattern_evaluator (
+	pattern_evaluation #(.THRESHOLD(20000)) pattern_evaluator (
 		.clk_in(clk_pixel),
 		.rst_in(sys_rst_pixel || nf_hdmi),
 		.nf_in(nf_hdmi),
