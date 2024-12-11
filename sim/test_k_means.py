@@ -18,8 +18,8 @@ async def reset(rst, clk):
 def generate_centroids_and_data(width=412, height=187, k=2):
     """Generate a 2D array with hardcoded centroids and data"""
     if k == 2:
-        centroids = [(100, 50), (200, 130)]
-        init_centroids = [(120,40), (180,60)]
+        centroids = [(100, 50), (150, 100)]
+        init_centroids = [(120,70), (300,0)]
         data = np.zeros((height, width), dtype=int)
         for x in range(90, 111):
             for y in range(40, 61):
@@ -135,15 +135,15 @@ async def reset(rst, clk):
     rst.value = 0
     await ClockCycles(clk, 5)
 
-#@cocotb.test()
-#async def test_k_means_two_clusters(dut):
-#    """Cocotb test for the k_means module with two clusters"""
-#    await run_k_means_test(dut, k=2)
-
 @cocotb.test()
-async def test_k_means_three_clusters(dut):
-    """Cocotb test for the k_means module with three clusters"""
-    await run_k_means_test(dut, k=3)
+async def test_k_means_two_clusters(dut):
+    """Cocotb test for the k_means module with two clusters"""
+    await run_k_means_test(dut, k=2)
+
+#@cocotb.test()
+#async def test_k_means_three_clusters(dut):
+#    """Cocotb test for the k_means module with three clusters"""
+#    await run_k_means_test(dut, k=3)
 
 #@cocotb.test()
 #async def test_k_means_four_clusters(dut):

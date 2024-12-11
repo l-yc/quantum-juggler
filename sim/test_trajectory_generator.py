@@ -29,6 +29,8 @@ async def init(dut):
 @cocotb.test()
 async def test_a(dut):
     """cocotb test for """
+    dut.hand_x_in.value = [800, 500]
+    dut.hand_y_in.value = [600, 700]
     await init(dut)
 
     await FallingEdge(dut.clk_in)
@@ -39,8 +41,7 @@ async def test_a(dut):
     #dut.pattern = [0, 0, 0, 0, 3, 2, 4]
     dut.pattern_valid.value = 1
     dut.num_balls.value = 3
-    dut.hand_x_in.value = [800, 500]
-    dut.hand_y_in.value = [600, 700]
+
     dut.frame_per_beat.value = 3
 
     await ClockCycles(dut.clk_in, 1) #wait three clock cycles
@@ -192,7 +193,7 @@ def trajectory_generator_runner():
     sources += [proj_path / "hdl" / "divider.sv"]
     sources += [proj_path / "hdl" / "evt_counter.sv"]
     build_test_args = ["-Wall"]
-    parameters = { 'g': 3, 's': 20 }
+    parameters = { 'g': 5, 's': 50 }
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

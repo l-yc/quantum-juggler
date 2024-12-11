@@ -112,19 +112,19 @@ module trajectory_generator
 	logic [9:0] _hand_y_in[1:0];
 	logic [3:0] _frame_per_beat;
 
-	always_comb begin
-		if (hand_x_in[0] < hand_x_in[1]) begin
-			_hand_x_in[0] = hand_x_in[0];
-			_hand_x_in[1] = hand_x_in[1];
-			_hand_y_in[0] = hand_y_in[0];
-			_hand_y_in[1] = hand_y_in[1];
-		end else begin
-			_hand_x_in[0] = hand_x_in[1];
-			_hand_x_in[1] = hand_x_in[0];
-			_hand_y_in[0] = hand_y_in[1];
-			_hand_y_in[1] = hand_y_in[0];
-		end
-	end
+//	always_comb begin
+//		if (hand_x_in[0] < hand_x_in[1]) begin
+//			_hand_x_in[0] = hand_x_in[0];
+//			_hand_x_in[1] = hand_x_in[1];
+//			_hand_y_in[0] = hand_y_in[0];
+//			_hand_y_in[1] = hand_y_in[1];
+//		end else begin
+//			_hand_x_in[0] = hand_x_in[1];
+//			_hand_x_in[1] = hand_x_in[0];
+//			_hand_y_in[0] = hand_y_in[1];
+//			_hand_y_in[1] = hand_y_in[0];
+//		end
+//	end
 
 	// FIXME think through how many bits we actually need... 
 	logic [11:0] t_start[6:0];
@@ -145,6 +145,18 @@ module trajectory_generator
 					traj_y_out[i] <= 0;
 				end
 				needs_divide <= 0;
+
+                if (hand_x_in[0] < hand_x_in[1]) begin
+                    _hand_x_in[0] <= hand_x_in[0];
+                    _hand_x_in[1] <= hand_x_in[1];
+                    _hand_y_in[0] <= hand_y_in[0];
+                    _hand_y_in[1] <= hand_y_in[1];
+                end else begin
+                    _hand_x_in[0] <= hand_x_in[1];
+                    _hand_x_in[1] <= hand_x_in[0];
+                    _hand_y_in[0] <= hand_y_in[1];
+                    _hand_y_in[1] <= hand_y_in[0];
+                end
 			end
 			INIT: begin
 				if (pattern_valid) begin

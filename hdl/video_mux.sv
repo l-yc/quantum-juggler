@@ -14,6 +14,7 @@ module video_mux (
     input wire crosshair2_in,
     input wire judgment_correct,
     input wire judgment_in,
+    input wire ball_stop,
     output logic [23:0] pixel_out
 );
 
@@ -39,7 +40,8 @@ module video_mux (
 				crosshair_in ? 24'hFF0000 :
 				crosshair2_in ? 24'h009966 :
 				(trajectory_pixel_in > 0) ? trajectory_pixel_in :
-				l_1;
+				ball_stop ? 24'h00FF00 :
+                l_1;
         else
             l_2 = l_1;
     end

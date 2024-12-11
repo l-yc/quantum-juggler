@@ -578,8 +578,10 @@ module top_level (
     logic k_means_valid_hands;
     logic [8:0] centroids_x_calc_hands [6:0];
     logic [7:0] centroids_y_calc_hands [6:0];
-    logic [10:0] centroids_x_hands [6:0];
-    logic [9:0] centroids_y_hands [6:0];
+    logic [10:0] centroids_x_hands [1:0];
+    logic [9:0] centroids_y_hands [1:0];
+    logic [10:0] ball_stop_x [1:0];
+    logic [9:0] ball_stop_y [1:0];
 
     k_means k_means_inst_hands (
         .clk_in(clk_pixel),
@@ -615,10 +617,16 @@ module top_level (
             end
         end
         if (k_means_valid_hands) begin
-            for (int i=0; i<7; i=i+1) begin
+            for (int i=0; i<2; i=i+1) begin
                 centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
                 centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
+        end
+        if (btn[2]) begin
+            ball_stop_x[0] <= centroids_x_hands[0];
+            ball_stop_x[1] <= centroids_x_hands[1];
+            ball_stop_y[0] <= centroids_y_hands[0];
+            ball_stop_y[1] <= centroids_y_hands[1];
         end
     end
 
@@ -636,6 +644,15 @@ module top_level (
     assign is_crosshair_hands = (
         (vcount_hdmi == centroids_y_hands[0] || hcount_hdmi == centroids_x_hands[0]) ||
         (vcount_hdmi == centroids_y_hands[1] || hcount_hdmi == centroids_x_hands[1]));
+
+    logic ball_stop [1:0];
+    localparam BALL_STOP_SIZE = 15;
+    always_comb begin
+        for (int i=0; i<2; i=i+1) begin
+            ball_stop[i] = ball_stop_x[i] - BALL_STOP_SIZE < hcount_hdmi && hcount_hdmi < ball_stop_x[i] + BALL_STOP_SIZE &&
+                           ball_stop_y[i] - BALL_STOP_SIZE < vcount_hdmi && vcount_hdmi < ball_stop_y[i] + BALL_STOP_SIZE;
+        end
+    end
 
     //}}} -------------- END K MEANS CLUSTERING --------------//
 
@@ -700,7 +717,7 @@ module top_level (
         else if (frame_per_beat >= 10) fpb_filtered = 10;
         else fpb_filtered = frame_per_beat[3:0];
     end
-    trajectory_generator #(.g(2), .MAX_TICK(2)) traj_gen (
+    trajectory_generator #(.g(3), .s(50), .MAX_TICK(2)) traj_gen (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel || btn[2]),
         .nf_in(nf_hdmi),
@@ -740,7 +757,7 @@ module top_level (
 	logic eval_out;
 	logic [14:0] pattern_error;
 	logic pattern_correct;
-	pattern_evaluation #(.THRESHOLD(20000)) pattern_evaluator (
+	pattern_evaluation #(.THRESHOLD(16000)) pattern_evaluator (
 		.clk_in(clk_pixel),
 		.rst_in(sys_rst_pixel || nf_hdmi),
 		.nf_in(nf_hdmi),
@@ -755,8 +772,26 @@ module top_level (
 		.pattern_correct(pattern_correct));
 
     logic judgment;
+    localparam QUEUE_SIZE = 60;
+    localparam QUEUE_LEN_THRESH = 1;
+    logic [$clog2(QUEUE_SIZE):0] eval_out_sum;
+    logic eval_out_queue [QUEUE_SIZE-1:0];
     always_ff @(posedge clk_pixel) begin
-        if (eval_out) judgment <= pattern_correct;
+        if (sys_rst_pixel) begin
+            eval_out_sum <= 0;
+            for (int i=0; i<QUEUE_SIZE; i=i+1) begin
+                eval_out_queue[i] <= 0;
+            end
+        end else if (eval_out) begin
+            eval_out_queue[0] <= pattern_correct;
+            for (int i=1; i<QUEUE_SIZE; i=i+1) begin
+                eval_out_queue[i] <= eval_out_queue[i-1];
+            end
+            eval_out_sum <= eval_out_sum + pattern_correct - eval_out_queue[QUEUE_SIZE-1];
+        end
+        if (eval_out_sum > QUEUE_LEN_THRESH) begin
+            judgment <= pattern_correct;
+        end
     end
 
     logic is_judgment;
@@ -792,6 +827,7 @@ module top_level (
         .crosshair2_in(is_crosshair_hands),
 		.judgment_correct(judgment),
         .judgment_in(is_judgment),
+        .ball_stop(ball_stop[0] || ball_stop[1]),
         .pixel_out({red, green, blue}));
 
     //-------------- HDMI OUTPUT --------------//
