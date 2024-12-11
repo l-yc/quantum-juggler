@@ -612,8 +612,6 @@ module top_level (
             for (int i=0; i<7; i=i+1) begin
                 centroids_x[i] <= {centroids_x_calc[i], 2'b0};
                 centroids_y[i] <= {centroids_y_calc[i], 2'b0};
-                centroids_x_hands[i] <= {centroids_x_calc_hands[i], 2'b0};
-                centroids_y_hands[i] <= {centroids_y_calc_hands[i], 2'b0};
             end
         end
         if (k_means_valid_hands) begin
@@ -680,7 +678,7 @@ module top_level (
             frame_per_beat <= 5;
         end else begin
             if (spi_read_data_valid) begin
-                frame_per_beat <= spi_read_data[9:7];
+                frame_per_beat <= spi_read_data[9:6];
             end
             if (select_count == 'b1) begin 
                 spi_trigger <= 1;
@@ -702,9 +700,9 @@ module top_level (
         else if (frame_per_beat >= 10) fpb_filtered = 10;
         else fpb_filtered = frame_per_beat[3:0];
     end
-    trajectory_generator #(.g(3)) traj_gen (
+    trajectory_generator #(.g(2), .MAX_TICK(2)) traj_gen (
         .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
+        .rst_in(sys_rst_pixel || btn[2]),
         .nf_in(nf_hdmi),
         .pattern(siteswap_pattern),
         .pattern_valid(pattern_valid),

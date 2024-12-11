@@ -3,7 +3,8 @@
 module trajectory_generator
 	#(
 		parameter g = 6, // pixels / frame^2
-		parameter s = 20
+		parameter s = 20,
+        parameter MAX_TICK = 2
 	)
 	(
 		input wire clk_in, // TODO what clock rate?
@@ -32,7 +33,7 @@ module trajectory_generator
         vx_ready[0] = 1;
         vy[0] = 0;
         for (int p = 1; p < 8; p=p+1) begin
-			vy[p] = (p == 2) ? 0 : (g * p * frame_per_beat) >> 1;
+			vy[p] = (p == 2) ? 0 : (g * p * _frame_per_beat) >> 1;
         end
     end
 
@@ -44,7 +45,7 @@ module trajectory_generator
 				.clk_in(clk_in),
 				.rst_in(rst_in),
 				.dividend_in((p&1) == 0 ? 2 * s : distance),
-				.divisor_in(p * frame_per_beat),
+				.divisor_in(p * _frame_per_beat),
 				.data_valid_in(needs_divide),
 				.quotient_out(vx[p]),
 				.remainder_out(),
@@ -74,6 +75,26 @@ module trajectory_generator
         end
     end
 
+    logic [$clog2(MAX_TICK)-1:0] tick_count;
+    logic [$clog2(MAX_TICK)-1:0] prev_tick_count;
+    evt_counter #(
+        .MAX_COUNT(MAX_TICK),
+		.RST_VAL(0)
+	) tick_counter (
+		.clk_in(clk_in),
+		.rst_in(rst_in),
+		.evt_in(nf_in),
+		.count_out(tick_count)
+	);
+
+    // Pulse for new time tick
+    logic tick;
+    always_ff @(posedge clk_in) begin
+        tick <= prev_tick_count == MAX_TICK - 2 && tick_count == MAX_TICK - 1;
+        prev_tick_count <= tick_count;
+    end
+
+
 	// inputs
 	evt_counter #(
 		.MAX_COUNT(4096),
@@ -81,7 +102,7 @@ module trajectory_generator
 	) t_counter (
 		.clk_in(clk_in),
 		.rst_in(rst_in),
-		.evt_in(nf_in),
+		.evt_in(tick),
 		.count_out(t)
 	);
 
@@ -132,11 +153,6 @@ module trajectory_generator
 						_pattern[i] <= pattern[i];
 					end
 					_num_balls <= num_balls;
-					// TODO live update
-					//for (integer i = 0; i < 2; i += 1) begin
-					//	_hand_x_in[i] <= hand_x_in[i];
-					//	_hand_y_in[i] <= hand_y_in[i];
-					//end
 					_frame_per_beat <= frame_per_beat;
 					needs_divide <= 1;
 
@@ -164,16 +180,7 @@ module trajectory_generator
 				end
 			end
 			TRANSMIT: begin
-				if (frame_per_beat != _frame_per_beat) begin
-					if (nf_in == 1) begin
-						needs_divide <= 1;
-						_frame_per_beat <= frame_per_beat;
-					end
-				end else begin
-					needs_divide <= 0;
-				end
-
-				if (nf_in == 1) begin
+				if (tick == 1) begin
 					if (counter == 0) begin
 						t_start[queue[0]] <= t+1;
 						hand[queue[0]] <= hidx;
@@ -195,22 +202,14 @@ module trajectory_generator
 					end
 					counter <= counter+1 < _frame_per_beat ? counter+1 : 0;
 
-
 					traj_valid <= 1;
 					for (integer i = 0; i < 7; i += 1) begin
 						if (i < _num_balls && t_start[i] <= t) begin
-							// p = thrw[i]
-							// dt = t - t_start[i]
-							//traj_x_out[i] <= hand[0] == 0 ? 0 : distance;
-							//traj_x_out[i] <= throw[i];
-							//traj_x_out[i] <= (t - t_start[i]);
-							//traj_x_out[i] <= vx[throw[i]];
 							if ((throw[i] & 1) == 0) begin
 								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s - vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s + vx[throw[i]] * (t - t_start[i]);
 							end else begin
 								traj_x_out[i] <= hand[i] == 0 ? _hand_x_in[0] + s + vx[throw[i]] * (t - t_start[i]) : _hand_x_in[1] - s - vx[throw[i]] * (t - t_start[i]);
 							end
-							//traj_y_out[i] <= hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ($rtoi(g * (t - t_start[i]) * (t - t_start[i])) >> 1);
 							traj_y_out[i] <= _hand_y_in[0] - vy[throw[i]] * (t - t_start[i]) + ((g * (t - t_start[i]) * (t - t_start[i])) >> 1);
 						end
 					end
